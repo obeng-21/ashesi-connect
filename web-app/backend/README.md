@@ -1,3 +1,5 @@
-# Backend starter
+# Backend domain library
 
-Only an isolated eligibility function is included. No Express server, database, secure authentication or API has been implemented. Do not use this module to make real graduation decisions until the workbook has been parsed and the complete university eligibility rules have been confirmed.
+The eligibility engine lives in `src/domain/eligibility/engine.ts`, with unit tests in `engine.test.ts`.
+
+Run `npm install --save-dev typescript @types/node` followed by `npm test`. This is a domain-library starter, not a deployed Express server. See `docs/06-sprints/sprint-01/eligibility-engine.md` for scope and limitations.
