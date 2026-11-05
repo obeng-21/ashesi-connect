@@ -1,144 +1,38 @@
-/**
- * Framework-independent audit evaluator.
- * Only programme requirements loaded from a verified workbook should be used.
- * Financial, disciplinary and institutional clearance are out of scope.
- */
 export type Grade = 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C' | 'D+' | 'D' | 'E';
-export type CourseRecord = {
-  code: string;
-  credits: number;
-  grade?: Grade;
-  status?: 'Enrolled' | 'Incomplete';
-  attempt: number;
-};
-export type Requirement = {
-  code: string;
-  credits: number;
-  minPassingGrade: Grade;
-  category: string;
-};
-export type ElectiveRequirement = {
-  id: string;
-  category: string;
-  credits: number;
-  eligibleCourseCodes: string[];
-  minCourses?: number;
-};
-export type ProgrammeRules = {
-  requiredCourses: Requirement[];
-  electiveGroups?: ElectiveRequirement[];
-  creditsRequired: number;
-  africanStudiesCourseCodes?: string[];
-  requiresAfricanStudies?: boolean;
-};
-export type RemainingReason =
-  | 'NOT_TAKEN' | 'FAILED' | 'IN_PROGRESS' | 'INCOMPLETE'
-  | 'ELECTIVE_SLOT_OPEN' | 'AFRICAN_STUDIES_MISSING' | 'CREDITS_SHORT';
-export type AuditResult = {
-  eligible: boolean;
-  creditsEarned: number;
-  creditsRequired: number;
-  creditsInProgress: number;
-  percentComplete: number;
-  remainingRequirements: { code: string; reason: RemainingReason; credits: number }[];
-  categoryCredits: Record<string, number>;
-};
-const gradeOrder: Grade[] = ['E', 'D', 'D+', 'C', 'C+', 'B', 'B+', 'A', 'A+'];
-const round = (n: number) => Math.round(n * 100) / 100;
-export function meetsThreshold(grade: Grade, threshold: Grade): boolean {
-  return gradeOrder.indexOf(grade) >= gradeOrder.indexOf(threshold);
+export type Attempt = { courseCode: string; grade?: Grade; status?: 'IN_PROGRESS' | 'INCOMPLETE'; attempt: number };
+export type Requirement = { courseCode: string; credits: number; minPassingGrade: Grade; category: string };
+export type RequirementStatus = 'PASSED' | 'IN_PROGRESS' | 'FAILED' | 'NOT_TAKEN';
+export type RequirementFinding = { courseCode: string; credits: number; category: string; status: RequirementStatus; passingAttempt?: number };
+export type AuditResult = { eligible: boolean; eligibilityDetermined: boolean; creditsEarned: number; creditsRequired: number; creditsInProgress: number; percentComplete: number; findings: RequirementFinding[]; outstanding: RequirementFinding[] };
+const grades: Grade[] = ['E','D','D+','C','C+','B','B+','A','A+'];
+export function isPassing(grade: Grade, minimum: Grade): boolean {
+  return grades.indexOf(grade) >= grades.indexOf(minimum);
 }
-/** A passed attempt satisfies a course even if a later attempt exists. */
-function bestPassedAttempt(attempts: CourseRecord[], threshold: Grade): CourseRecord | undefined {
-  return attempts.filter(a => a.grade && meetsThreshold(a.grade, threshold))
-    .sort((a, b) => b.attempt - a.attempt)[0];
-}
-export function evaluateProgramme(records: CourseRecord[], rules: ProgrammeRules): AuditResult {
-  if (!Number.isFinite(rules.creditsRequired) || rules.creditsRequired <= 0) {
-    throw new Error('creditsRequired must be positive and finite');
-  }
+/**
+ * Starter-only evaluation of a VERIFIED list of required courses.
+ * This does NOT implement elective pools, category credit minima, IAP, programme
+ * tracks, capstone conditions or the full Ashesi 2028 graduation rules.
+ * eligibilityDetermined stays false until the full ruleset is implemented.
+ */
+export function evaluate(attempts: Attempt[], requirements: Requirement[], creditsRequired: number): AuditResult {
+  if (!Number.isFinite(creditsRequired) || creditsRequired < 0) throw new Error('Invalid creditsRequired');
   const seen = new Set<string>();
-  for (const r of rules.requiredCourses) {
-    if (seen.has(r.code)) throw new Error('Duplicate required course: ' + r.code);
-    if (!Number.isFinite(r.credits) || r.credits <= 0) throw new Error('Invalid credits for ' + r.code);
-    seen.add(r.code);
-  }
-  const byCode = new Map<string, CourseRecord[]>();
-  for (const r of records) {
-    if (!Number.isFinite(r.credits) || r.credits < 0) throw new Error('Invalid transcript credits');
-    const arr = byCode.get(r.code) ?? [];
-    arr.push(r);
-    byCode.set(r.code, arr);
-  }
-  const remainingRequirements: AuditResult['remainingRequirements'] = [];
-  const categoryCredits: Record<string, number> = {};
-  const consumed = new Set<string>();
   let creditsEarned = 0, creditsInProgress = 0;
-  for (const req of rules.requiredCourses) {
-    const attempts = byCode.get(req.code) ?? [];
-    const passed = bestPassedAttempt(attempts, req.minPassingGrade);
-    if (passed) {
-      creditsEarned += req.credits;
-      categoryCredits[req.category] = round((categoryCredits[req.category] ?? 0) + req.credits);
-      consumed.add(req.code);
-      continue;
-    }
-    const inProgress = attempts.some(a => a.status === 'Enrolled');
-    if (inProgress) creditsInProgress += req.credits;
-    const reason: RemainingReason = inProgress ? 'IN_PROGRESS'
-      : attempts.some(a => a.status === 'Incomplete') ? 'INCOMPLETE'
-      : attempts.some(a => a.grade) ? 'FAILED' : 'NOT_TAKEN';
-    remainingRequirements.push({ code: req.code, reason, credits: req.credits });
+  const findings: RequirementFinding[] = [];
+  for (const requirement of requirements) {
+    if (!requirement.courseCode || seen.has(requirement.courseCode)) throw new Error('Duplicate or empty requirement code');
+    seen.add(requirement.courseCode);
+    if (!Number.isFinite(requirement.credits) || requirement.credits < 0) throw new Error('Invalid requirement credits');
+    const courseAttempts = attempts.filter(a => a.courseCode === requirement.courseCode);
+    const passingAttempt = courseAttempts.filter(a => a.grade && isPassing(a.grade, requirement.minPassingGrade)).sort((a,b) => b.attempt-a.attempt)[0];
+    const inProgress = courseAttempts.some(a => a.status === 'IN_PROGRESS');
+    const hasFailure = courseAttempts.some(a => a.grade !== undefined && !isPassing(a.grade,requirement.minPassingGrade));
+    let status: RequirementStatus;
+    if (passingAttempt) { status='PASSED'; creditsEarned+=requirement.credits; }
+    else if (inProgress) { status='IN_PROGRESS'; creditsInProgress+=requirement.credits; }
+    else status=hasFailure?'FAILED':'NOT_TAKEN';
+    findings.push({courseCode:requirement.courseCode,credits:requirement.credits,category:requirement.category,status,...(passingAttempt?{passingAttempt:passingAttempt.attempt}:{})});
   }
-  for (const group of rules.electiveGroups ?? []) {
-    if (group.credits < 0 || !Number.isFinite(group.credits)) throw new Error('Invalid elective credits');
-    let groupCredits = 0, count = 0;
-    for (const code of group.eligibleCourseCodes) {
-      if (consumed.has(code)) continue;
-      const passed = bestPassedAttempt(byCode.get(code) ?? [], 'D+');
-      if (!passed) continue;
-      consumed.add(code);
-      groupCredits += passed.credits;
-      count++;
-    }
-    const recognized = Math.min(groupCredits, group.credits);
-    creditsEarned += recognized;
-    categoryCredits[group.category] = round((categoryCredits[group.category] ?? 0) + recognized);
-    if (groupCredits < group.credits || count < (group.minCourses ?? 0)) {
-      remainingRequirements.push({
-        code: group.id,
-        reason: 'ELECTIVE_SLOT_OPEN',
-        credits: round(Math.max(0, group.credits - groupCredits))
-      });
-    }
-  }
-  if (rules.requiresAfricanStudies) {
-    const codes = rules.africanStudiesCourseCodes ?? [];
-    const passed = codes.some(code => bestPassedAttempt(byCode.get(code) ?? [], 'D+'));
-    if (!passed) remainingRequirements.push({
-      code: 'AFRICAN_STUDIES',
-      reason: 'AFRICAN_STUDIES_MISSING',
-      credits: 0
-    });
-  }
-  creditsEarned = round(creditsEarned);
-  if (creditsEarned < rules.creditsRequired) {
-    remainingRequirements.push({
-      code: 'TOTAL_CREDITS', reason: 'CREDITS_SHORT',
-      credits: round(rules.creditsRequired - creditsEarned)
-    });
-  }
-  return {
-    eligible: remainingRequirements.length === 0,
-    creditsEarned,
-    creditsRequired: rules.creditsRequired,
-    creditsInProgress: round(creditsInProgress),
-    percentComplete: Math.min(100, round(creditsEarned / rules.creditsRequired * 100)),
-    remainingRequirements,
-    categoryCredits
-  };
-}
-/** Compatibility adapter for the initial simple engine API. */
-export function evaluate(records: CourseRecord[], requirements: Requirement[], creditsRequired: number): AuditResult {
-  return evaluateProgramme(records, { requiredCourses: requirements, creditsRequired });
+  const outstanding = findings.filter(f => f.status !== 'PASSED');
+  return {eligible:false,eligibilityDetermined:false,creditsEarned,creditsRequired,creditsInProgress,percentComplete:creditsRequired>0?Math.min(100,Math.round(creditsEarned/creditsRequired*100)):0,findings,outstanding};
 }

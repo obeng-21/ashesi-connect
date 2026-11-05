@@ -1,15 +1,1 @@
-{
-  "name": "ashesi-graduation-tracker-backend",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "typecheck": "tsc --noEmit",
-    "build": "tsc",
-    "test": "npm run build && node --test dist/domain/eligibility/engine.test.js"
-  },
-  "devDependencies": {
-    "@types/node": "^22.0.0",
-    "typescript": "^5.6.0"
-  }
-}
+{"name":"ashesi-graduation-audit-engine","version":"0.1.0","private":true,"type":"module","scripts":{"test":"vitest run","test:watch":"vitest"},"devDependencies":{"typescript":"^5.7.3","vitest":"^3.0.0"}}
