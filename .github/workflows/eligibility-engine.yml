@@ -1,0 +1,28 @@
+name: Eligibility engine checks
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web-app/backend/**'
+      - '.github/workflows/eligibility-engine.yml'
+  pull_request:
+    paths:
+      - 'web-app/backend/**'
+      - '.github/workflows/eligibility-engine.yml'
+jobs:
+  eligibility:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web-app/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Type-check
+        run: npm run typecheck
+      - name: Run tests
+        run: npm test
