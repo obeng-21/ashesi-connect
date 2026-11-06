@@ -9,8 +9,23 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
 import argon2 from 'argon2';
-import { User } from '../dist/auth.js';
-import { Student } from '../dist/models.js';
+// Define isolated seed models locally so the script does not import the API's
+// runtime/authentication module or trigger its side effects.
+const { Schema } = mongoose;
+const User = mongoose.models.User ?? mongoose.model('User', new Schema({
+  identifier: { type: String, required: true, unique: true },
+  passwordHash: { type: String, required: true, select: false },
+  role: { type: String, required: true, enum: ['STUDENT', 'ADMIN'] },
+  studentId: String, forcePasswordChange: Boolean,
+  failedLogins: Number, lockedUntil: Date
+}, { timestamps: true }));
+const Student = mongoose.models.Student ?? mongoose.model('Student', new Schema({
+  studentId: { type: String, required: true, unique: true },
+  fullName: { type: String, required: true },
+  programme: { type: String, required: true },
+  yearGroup: { type: Number, required: true },
+  track: { type: String, default: 'standard' }
+}, { timestamps: true }));
 
 const dbName = 'ashesi_graduation_staging';
 const studentId = 'DEMO-2028-001';
@@ -44,7 +59,7 @@ try {
   }
   for (const account of accounts) {
     const existing = await User.findOne({ identifier: account.identifier });
-    if (existing && (existing.role !== account.role || (account.role === 'STUDENT' && existing.studentId !== studentId))) {
+    if (existing && (existing.role !== account.role || (account.role === 'STUDENT' && existing.studentId !== studentId) || (account.role === 'ADMIN' && existing.studentId))) {
       fail('Account identifier collision: refusing overwrite');
     }
   }
