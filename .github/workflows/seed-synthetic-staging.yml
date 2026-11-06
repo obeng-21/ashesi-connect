@@ -51,7 +51,7 @@ jobs:
           node-version: '22'
       - name: Install dependencies
         working-directory: web-app/backend
-        run: npm install --ignore-scripts --omit=dev --no-audit --no-fund
+        run: npm install --omit=dev --no-audit --no-fund
       - name: Run guarded seed
         working-directory: web-app/backend
         env:
