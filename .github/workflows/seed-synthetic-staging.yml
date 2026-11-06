@@ -1,0 +1,67 @@
+name: Seed synthetic Ashesi staging accounts (manual only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry-run or provision'
+        type: choice
+        required: true
+        default: dry-run
+        options:
+          - dry-run
+          - provision
+      confirmation:
+        description: 'For provision only, enter I_CONFIRM_ISOLATED_STAGING'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: synthetic-ashesi-staging-seed
+  cancel-in-progress: false
+
+jobs:
+  seed:
+    if: ${{ github.repository == 'obeng-21/ashesi-connect' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ashesi-synthetic-staging
+    steps:
+      - name: Validate explicit approval
+        env:
+          MODE: ${{ inputs.mode }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          if [ "$MODE" = "provision" ] && [ "$CONFIRMATION" != "I_CONFIRM_ISOLATED_STAGING" ]; then
+            echo "::error::Provisioning requires the exact confirmation phrase."
+            exit 1
+          fi
+          if [ "$MODE" != "dry-run" ] && [ "$MODE" != "provision" ]; then exit 1; fi
+      - name: Checkout reviewed seed revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ac728360c26b4d19a1b41ae8accc43c6b9b14858
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        working-directory: web-app/backend
+        run: npm install --ignore-scripts --omit=dev --no-audit --no-fund
+      - name: Run guarded seed
+        working-directory: web-app/backend
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          DEMO_STUDENT_PASSWORD: ${{ secrets.DEMO_STUDENT_PASSWORD }}
+          DEMO_ADMIN_PASSWORD: ${{ secrets.DEMO_ADMIN_PASSWORD }}
+          MODE: ${{ inputs.mode }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          if [ "$MODE" = "provision" ] && [ "$CONFIRMATION" = "I_CONFIRM_ISOLATED_STAGING" ]; then
+            export SEED_SYNTHETIC_STAGING=I_CONFIRM_ISOLATED_STAGING
+          fi
+          node scripts/seed-synthetic-staging.mjs
