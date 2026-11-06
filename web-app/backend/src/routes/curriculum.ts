@@ -55,13 +55,22 @@ curriculumRouter.get('/students/me/audit-readiness', requireAuth, async (req: Au
   const curricula = await CurriculumRecord.find({
    programme: student.programme, track: student.track ?? 'standard', status: 'REVIEWED',
    validationIssues: { $size: 0 }
-  }).select('version -_id').limit(1).lean();
+  }).select('version status validationIssues sources -_id').limit(200).lean();
+  const selection = selectCohortCurriculum(student.yearGroup, curricula.map(c => ({
+   version: String(c.version),
+   status: c.status === 'REVIEWED' ? 'REVIEWED' as const : 'DRAFT' as const,
+   validationIssues: Array.isArray(c.validationIssues) ? c.validationIssues.map(String) : ['INVALID_VALIDATION_ISSUES'],
+   sources: Array.isArray(c.sources) ? c.sources.map((s: { effectiveYear?: unknown }) => ({
+    effectiveYear: typeof s.effectiveYear === 'number' ? s.effectiveYear : Number.NaN
+   })) : []
+  })));
   const issues = [...mapping.issues];
-  if (!curricula.length) issues.push('NO_REVIEWED_CURRICULUM');
+  if (selection.issue) issues.push(selection.issue);
   if (!mapping.entries.length) issues.push('NO_USABLE_TRANSCRIPT_ENTRIES');
   res.json({
    programme: student.programme, track: student.track ?? 'standard',
    transcriptEntries: mapping.entries.length,
+   curriculumVersion: selection.selectedVersion,
    status: 'INSUFFICIENT_DATA', issues,
    nextStep: 'CURRICULUM_AND_TRANSCRIPT_RECONCILIATION',
    officialCertification: false
