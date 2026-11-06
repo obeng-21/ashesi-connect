@@ -5,6 +5,7 @@ import { Student, Enrollment } from '../models.js';
 import { mapEnrollmentTranscript, type EnrollmentRecord } from '../domain/eligibility/transcript-mapping.js';
 import { previewAcademicProgress } from '../domain/eligibility/academic-preview.js';
 import type { ProgrammeRules } from '../domain/eligibility/programme-audit.js';
+import { selectCohortCurriculum, type CohortCurriculum } from '../domain/eligibility/cohort-selection.js';
 
 export const curriculumRouter = Router();
 
@@ -85,14 +86,15 @@ curriculumRouter.get('/students/me/academic-preview', requireAuth, async (req: A
    CurriculumRecord.find({
     programme: student.programme, track, status: 'REVIEWED',
     validationIssues: { $size: 0 }
-   }).select('version rules -_id').sort({ version: -1 }).limit(2).lean()
+   }).select('version rules status validationIssues sources -_id').limit(200).lean()
   ]);
-  // Do not silently choose between multiple reviewed curriculum versions:
-  // cohort-specific assignment must be established before a student preview.
-  const selected = curricula.length === 1 ? curricula[0] : null;
+  const selection = selectCohortCurriculum(student.yearGroup, curricula as CohortCurriculum[]);
+  const selected = selection.selectedVersion
+   ? curricula.find(c => c.version === selection.selectedVersion)
+   : undefined;
   const preview = previewAcademicProgress(records as EnrollmentRecord[], selected?.rules as ProgrammeRules | undefined ?? null);
   const issues = [...preview.issues];
-  if (curricula.length > 1) issues.push('CURRICULUM_COHORT_MAPPING_REQUIRED');
+  if (selection.issue) issues.push(selection.issue);
   res.json({
    programme: student.programme, track, yearGroup: student.yearGroup,
    curriculumVersion: selected?.version ?? null,
