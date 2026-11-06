@@ -106,4 +106,23 @@ describe('provisional academic progress preview',()=>{
   expect(result.officialCertification).toBe(false);
   expect(result.audit?.eligibilityDetermined).toBe(false);
  });
+
+ it('keeps an unfilled elective pool outstanding even when required credits are met',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[{credits:1,grade:'A',status:'COMPLETED'}]}],{
+   ...rules,electivePools:[{category:'Elective',creditsRequired:1,courseCodes:['EL101'],minimumGrade:'D+'}]
+  });
+  expect(result.status).toBe('REQUIREMENTS_OUTSTANDING');
+  expect(result.audit?.remainingRequirements).toEqual(expect.arrayContaining([expect.objectContaining({code:'Elective',reason:'ELECTIVE_SLOT_OPEN',credits:1})]));
+  expect(result.officialCertification).toBe(false);
+  expect(result.audit?.eligibilityDetermined).toBe(false);
+ });
+ it('rejects a curriculum with a negative elective credit requirement',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[{credits:1,grade:'A',status:'COMPLETED'}]}],{
+   ...rules,electivePools:[{category:'Elective',creditsRequired:-1,courseCodes:['EL101']}]
+  });
+  expect(result.status).toBe('INSUFFICIENT_DATA');
+  expect(result.issues).toContain('INVALID_CURRICULUM_OR_TRANSCRIPT');
+  expect(result.audit).toBeNull();
+  expect(result.officialCertification).toBe(false);
+ });
 });
