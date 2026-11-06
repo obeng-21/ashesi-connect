@@ -1,7 +1,7 @@
 name: Production application CI
 on:
   push:
-    branches: [feat/production-graduation-tracker]
+    branches: [main, feat/production-graduation-tracker]
   pull_request:
     branches: [main]
 jobs:
