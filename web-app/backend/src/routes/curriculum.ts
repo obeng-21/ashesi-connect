@@ -32,10 +32,20 @@ curriculumRouter.get('/students/me/curriculum', requireAuth, async (req: Authent
   const curricula = await CurriculumRecord.find({
    programme: student.programme, track: student.track ?? 'standard', status: 'REVIEWED',
    validationIssues: { $size: 0 }
-  }).select('programme track version status updatedAt -_id').sort({ version: -1 }).limit(20).lean();
+  }).select('programme track version status sources validationIssues updatedAt -_id').limit(200).lean();
+  const selection = selectCohortCurriculum(student.yearGroup, curricula.map(c => ({
+   version: String(c.version),
+   status: c.status === 'REVIEWED' ? 'REVIEWED' as const : 'DRAFT' as const,
+   validationIssues: Array.isArray(c.validationIssues) ? c.validationIssues.map(String) : ['INVALID_VALIDATION_ISSUES'],
+   sources: Array.isArray(c.sources) ? c.sources.map((s: { effectiveYear?: unknown }) => ({
+    effectiveYear: typeof s.effectiveYear === 'number' ? s.effectiveYear : Number.NaN
+   })) : []
+  })));
   res.json({
    programme: student.programme, track: student.track ?? 'standard', yearGroup: student.yearGroup,
-   curricula, assessmentStatus: 'NOT_YET_CALCULATED', officialCertification: false
+   curricula: curricula.map(c => ({ programme:c.programme,track:c.track,version:c.version,status:c.status,updatedAt:c.updatedAt })),
+   selectedVersion: selection.selectedVersion, selectionIssue: selection.issue,
+   assessmentStatus: 'NOT_YET_CALCULATED', officialCertification: false
   });
  } catch { res.status(503).json({ error: 'CURRICULUM_UNAVAILABLE' }); }
 });
