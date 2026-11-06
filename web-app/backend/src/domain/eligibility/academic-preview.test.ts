@@ -125,4 +125,26 @@ describe('provisional academic progress preview',()=>{
   expect(result.audit).toBeNull();
   expect(result.officialCertification).toBe(false);
  });
+ it('counts a repeated required course only once after a passing retake',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[
+   {credits:1,grade:'D',status:'COMPLETED'},
+   {credits:1,grade:'B',status:'COMPLETED'}
+  ]}],rules);
+  expect(result.status).toBe('ACADEMIC_REQUIREMENTS_MET');
+  expect(result.audit?.creditsEarned).toBe(1);
+  expect(result.audit?.remainingRequirements).toEqual([]);
+  expect(result.audit?.eligibilityDetermined).toBe(false);
+  expect(result.officialCertification).toBe(false);
+ });
+ it('does not double count a required course listed in an elective pool',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[{credits:1,grade:'A',status:'COMPLETED'}]}],{
+   ...rules,electivePools:[{category:'Elective',creditsRequired:1,courseCodes:['CS101'],minimumGrade:'D+'}]
+  });
+  expect(result.status).toBe('REQUIREMENTS_OUTSTANDING');
+  expect(result.audit?.creditsEarned).toBe(1);
+  expect(result.audit?.remainingRequirements).toEqual(expect.arrayContaining([
+   expect.objectContaining({code:'Elective',reason:'ELECTIVE_SLOT_OPEN',credits:1})
+  ]));
+  expect(result.officialCertification).toBe(false);
+ });
 });
