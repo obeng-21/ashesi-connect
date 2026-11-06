@@ -1,4 +1,5 @@
-import { Schema, model, models } from 'mongoose';
+import mongoose from 'mongoose';
+const { Schema, model, models } = mongoose;
 import type { CurriculumVersion } from '../domain/eligibility/curriculum-version.js';
 import { validateCurriculum } from '../domain/eligibility/curriculum-version.js';
 
