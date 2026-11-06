@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { requireAuth, requireRole, type AuthenticatedRequest } from '../auth.js';
 import { CurriculumRecord } from '../models/curriculum.js';
-import { Student } from '../models.js';
+import { Student, Enrollment } from '../models.js';
+import { mapEnrollmentTranscript, type EnrollmentRecord } from '../domain/eligibility/transcript-mapping.js';
 
 export const curriculumRouter = Router();
 
@@ -33,4 +34,33 @@ curriculumRouter.get('/students/me/curriculum', requireAuth, async (req: Authent
    curricula, assessmentStatus: 'NOT_YET_CALCULATED', officialCertification: false
   });
  } catch { res.status(503).json({ error: 'CURRICULUM_UNAVAILABLE' }); }
+});
+
+/** Read-only student transcript readiness; does not infer GPA or issue graduation decisions. */
+curriculumRouter.get('/students/me/audit-readiness', requireAuth, async (req: AuthenticatedRequest, res) => {
+ if (req.auth?.role !== 'STUDENT' || !req.auth.studentId) {
+  res.status(403).json({ error: 'FORBIDDEN' }); return;
+ }
+ try {
+  const student = await Student.findOne({ studentId: req.auth.studentId })
+   .select('programme track yearGroup -_id').lean();
+  if (!student) { res.status(404).json({ error: 'STUDENT_NOT_FOUND' }); return; }
+  const records = await Enrollment.find({ studentId: req.auth.studentId })
+   .select('courseCode attempts -_id').lean();
+  const mapping = mapEnrollmentTranscript(records as EnrollmentRecord[]);
+  const curricula = await CurriculumRecord.find({
+   programme: student.programme, track: student.track ?? 'standard', status: 'REVIEWED',
+   validationIssues: { $size: 0 }
+  }).select('version -_id').limit(1).lean();
+  const issues = [...mapping.issues];
+  if (!curricula.length) issues.push('NO_REVIEWED_CURRICULUM');
+  if (!mapping.entries.length) issues.push('NO_USABLE_TRANSCRIPT_ENTRIES');
+  res.json({
+   programme: student.programme, track: student.track ?? 'standard',
+   transcriptEntries: mapping.entries.length,
+   status: 'INSUFFICIENT_DATA', issues,
+   nextStep: 'CURRICULUM_AND_TRANSCRIPT_RECONCILIATION',
+   officialCertification: false
+  });
+ } catch { res.status(503).json({ error: 'AUDIT_READINESS_UNAVAILABLE' }); }
 });
