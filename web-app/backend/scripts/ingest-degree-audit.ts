@@ -7,6 +7,7 @@ import * as XLSX from 'xlsx';
 import { writeFileSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { validateWorkbookRows } from '../src/domain/eligibility/workbook-preview.js';
+import { extractProgramme } from '../src/domain/eligibility/workbook-extract.js';
 const input = process.argv[2];
 if (!input) throw Error('Usage: ingest-degree-audit.ts <workbook.xlsx>');
 const workbook = XLSX.readFile(input, { cellDates: false });
@@ -17,7 +18,8 @@ const output = programmes.map(programme => {
  if (!sheet) throw Error('Missing programme sheet: ' + programme);
  const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: null });
  allRows[programme] = rows;
- return { programme, sourceSheet: programme, rows: rows.map((cells, index) => ({ sourceRow: index + 1, cells })).filter(row => row.cells.some(cell => cell !== null && cell !== '')) };
+ const sourceRows = rows.map((cells, index) => ({ sourceRow: index + 1, cells })).filter(row => row.cells.some(cell => cell !== null && cell !== ''));
+ return { programme, sourceSheet: programme, rows: sourceRows, extraction: extractProgramme(sourceRows) };
 });
 const issues = validateWorkbookRows(allRows);
 if (issues.length) throw Error('Workbook validation failed: ' + issues.join(', '));
