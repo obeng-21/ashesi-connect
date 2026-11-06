@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { validateCurriculum, type CurriculumVersion } from '../domain/eligibility/curriculum-version.js';
-import { toCurriculumDraft } from '../models/curriculum.js';
+import { validateCurriculum, type CurriculumVersion } from './curriculum-version.js';
+import { toCurriculumDraft } from '../../models/curriculum.js';
 
 const grade = z.enum(['A+','A','B+','B','C+','C','D+','D' ,'E']);
 const rule = z.object({
