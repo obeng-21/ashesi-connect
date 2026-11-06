@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { requireAuth, requireRole, type AuthenticatedRequest } from '../auth.js';
 import { CurriculumRecord } from '../models/curriculum.js';
 import { Student, Enrollment } from '../models.js';
@@ -7,8 +8,54 @@ import { previewAcademicProgress } from '../domain/eligibility/academic-preview.
 import type { ProgrammeRules } from '../domain/eligibility/programme-audit.js';
 import { selectCohortCurriculum, type CohortCurriculum } from '../domain/eligibility/cohort-selection.js';
 import { previewGpa } from '../domain/eligibility/gpa-preview.js';
+import { planCurriculumReview } from '../domain/eligibility/curriculum-review.js';
+import type { CurriculumVersion } from '../domain/eligibility/curriculum-version.js';
 
 export const curriculumRouter = Router();
+
+const reviewRequestSchema = z.object({
+ programme: z.string().trim().min(1).max(40),
+ track: z.string().trim().min(1).max(100),
+ version: z.string().trim().min(1).max(100),
+ evidenceReference: z.string().trim().min(1).max(500)
+}).strict();
+
+/**
+ * Administrator review is deliberately non-certifying. Only a draft with
+ * validated rules and recorded evidence may be promoted to REVIEWED.
+ * Conditional update prevents two concurrent reviewers from overwriting one another.
+ */
+curriculumRouter.post('/admin/curricula/review', requireAuth, requireRole('ADMIN'), async (req: AuthenticatedRequest, res) => {
+ const parsed = reviewRequestSchema.safeParse(req.body);
+ if (!parsed.success) { res.status(400).json({ error:'INVALID_INPUT' }); return; }
+ if (!req.auth?.sub) { res.status(401).json({ error:'UNAUTHORIZED' }); return; }
+ try {
+  const { programme, track, version, evidenceReference } = parsed.data;
+  const record = await CurriculumRecord.findOne({ programme, track, version }).lean();
+  if (!record) { res.status(404).json({ error:'CURRICULUM_NOT_FOUND' }); return; }
+  const curriculum: CurriculumVersion = {
+   version: String(record.version),
+   status: record.status === 'DRAFT' ? 'DRAFT' : record.status === 'REVIEWED' ? 'REVIEWED' : 'SUPERSEDED',
+   rules: record.rules as ProgrammeRules,
+   sources: record.sources as CurriculumVersion['sources']
+  };
+  const decision = planCurriculumReview(curriculum,{
+   reviewerId:req.auth.sub,evidenceReference,reviewedAt:new Date()
+  });
+  const existingIssues = Array.isArray(record.validationIssues) ? record.validationIssues : ['INVALID_VALIDATION_ISSUES'];
+  if (existingIssues.length || !decision.accepted) {
+   res.status(409).json({ error:'CURRICULUM_REVIEW_BLOCKED', issues:[...existingIssues,...decision.issues] }); return;
+  }
+  const updated = await CurriculumRecord.findOneAndUpdate(
+   { programme,track,version,status:'DRAFT',validationIssues:{$size:0} },
+   { $set: {status:'REVIEWED',review:decision.review,publishedAt:new Date()} },
+   {new:true,runValidators:true}
+  ).select('programme track version status review -_id').lean();
+  if (!updated) { res.status(409).json({error:'CURRICULUM_REVIEW_CONFLICT'}); return; }
+  res.json({ curriculum:updated, officialCertification:false });
+ } catch { res.status(503).json({error:'CURRICULUM_REVIEW_UNAVAILABLE'}); }
+});
+
 
 /** Administrative catalogue metadata; no mutable rules or private student records. */
 curriculumRouter.get('/admin/curricula', requireAuth, requireRole('ADMIN'), async (_req, res) => {
