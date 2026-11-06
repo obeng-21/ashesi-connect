@@ -19,6 +19,7 @@ const curriculumSchema = new Schema({
  sources: { type: [sourceSchema], required: true },
  validationIssues: { type: [String], default: [] },
  sourceWorkbookHash: String,
+ review: { reviewerId: String, reviewedAt: Date, evidenceReference: String },
  publishedAt: Date
 }, { timestamps: true, strict: true });
 curriculumSchema.index({ programme: 1, track: 1, version: 1 }, { unique: true });
