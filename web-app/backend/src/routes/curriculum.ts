@@ -3,6 +3,8 @@ import { requireAuth, requireRole, type AuthenticatedRequest } from '../auth.js'
 import { CurriculumRecord } from '../models/curriculum.js';
 import { Student, Enrollment } from '../models.js';
 import { mapEnrollmentTranscript, type EnrollmentRecord } from '../domain/eligibility/transcript-mapping.js';
+import { previewAcademicProgress } from '../domain/eligibility/academic-preview.js';
+import type { ProgrammeRules } from '../domain/eligibility/programme-audit.js';
 
 export const curriculumRouter = Router();
 
@@ -63,4 +65,41 @@ curriculumRouter.get('/students/me/audit-readiness', requireAuth, async (req: Au
    officialCertification: false
   });
  } catch { res.status(503).json({ error: 'AUDIT_READINESS_UNAVAILABLE' }); }
+});
+
+/**
+ * Provisional course-progress preview. The selected curriculum must be reviewed,
+ * issue-free, and student-scoped. No official graduation certification is issued.
+ */
+curriculumRouter.get('/students/me/academic-preview', requireAuth, async (req: AuthenticatedRequest, res) => {
+ if (req.auth?.role !== 'STUDENT' || !req.auth.studentId) {
+  res.status(403).json({ error: 'FORBIDDEN' }); return;
+ }
+ try {
+  const student = await Student.findOne({ studentId: req.auth.studentId })
+   .select('programme track yearGroup -_id').lean();
+  if (!student) { res.status(404).json({ error: 'STUDENT_NOT_FOUND' }); return; }
+  const track = student.track ?? 'standard';
+  const [records, curricula] = await Promise.all([
+   Enrollment.find({ studentId: req.auth.studentId }).select('courseCode attempts -_id').lean(),
+   CurriculumRecord.find({
+    programme: student.programme, track, status: 'REVIEWED',
+    validationIssues: { $size: 0 }
+   }).select('version rules -_id').sort({ version: -1 }).limit(2).lean()
+  ]);
+  // Do not silently choose between multiple reviewed curriculum versions:
+  // cohort-specific assignment must be established before a student preview.
+  const selected = curricula.length === 1 ? curricula[0] : null;
+  const preview = previewAcademicProgress(records as EnrollmentRecord[], selected?.rules as ProgrammeRules | undefined ?? null);
+  const issues = [...preview.issues];
+  if (curricula.length > 1) issues.push('CURRICULUM_COHORT_MAPPING_REQUIRED');
+  res.json({
+   programme: student.programme, track, yearGroup: student.yearGroup,
+   curriculumVersion: selected?.version ?? null,
+   ...preview,
+   status: issues.length ? 'INSUFFICIENT_DATA' : preview.status,
+   issues,
+   officialCertification: false
+  });
+ } catch { res.status(503).json({ error: 'ACADEMIC_PREVIEW_UNAVAILABLE' }); }
 });
