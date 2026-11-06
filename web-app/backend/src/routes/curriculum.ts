@@ -26,6 +26,11 @@ const reviewRequestSchema = z.object({
  * Conditional update prevents two concurrent reviewers from overwriting one another.
  */
 curriculumRouter.post('/admin/curricula/review', requireAuth, requireRole('ADMIN'), async (req: AuthenticatedRequest, res) => {
+ // Fail closed until a deployment operator explicitly enables this workflow.
+ // Enabling the flag is not itself proof of Registry reviewer authorization.
+ if (process.env.ENABLE_CURRICULUM_REVIEW !== 'yes') {
+  res.status(503).json({ error:'CURRICULUM_REVIEW_DISABLED' }); return;
+ }
  const parsed = reviewRequestSchema.safeParse(req.body);
  if (!parsed.success) { res.status(400).json({ error:'INVALID_INPUT' }); return; }
  if (!req.auth?.sub) { res.status(401).json({ error:'UNAUTHORIZED' }); return; }
