@@ -88,4 +88,22 @@ describe('provisional academic progress preview',()=>{
   expect(result.audit).toBeNull();
   expect(result.officialCertification).toBe(false);
  });
+ it('fails closed on duplicate required-course rules',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[{credits:1,grade:'A',status:'COMPLETED'}]}],{
+   ...rules,requiredCourses:[...rules.requiredCourses,...rules.requiredCourses]
+  });
+  expect(result.status).toBe('INSUFFICIENT_DATA');
+  expect(result.issues).toContain('INVALID_CURRICULUM_OR_TRANSCRIPT');
+  expect(result.audit).toBeNull();
+  expect(result.officialCertification).toBe(false);
+ });
+ it('reports a total-credit shortfall despite completing required courses',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[{credits:1,grade:'A',status:'COMPLETED'}]}],{
+   ...rules,totalCredits:2
+  });
+  expect(result.status).toBe('REQUIREMENTS_OUTSTANDING');
+  expect(result.audit?.remainingRequirements).toEqual(expect.arrayContaining([expect.objectContaining({code:'TOTAL_CREDITS',reason:'CREDIT_SHORTFALL',credits:1})]));
+  expect(result.officialCertification).toBe(false);
+  expect(result.audit?.eligibilityDetermined).toBe(false);
+ });
 });
