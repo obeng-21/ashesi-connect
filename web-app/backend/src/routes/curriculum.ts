@@ -1,0 +1,36 @@
+import { Router } from 'express';
+import { requireAuth, requireRole, type AuthenticatedRequest } from '../auth.js';
+import { CurriculumRecord } from '../models/curriculum.js';
+import { Student } from '../models.js';
+
+export const curriculumRouter = Router();
+
+/** Administrative catalogue metadata; no mutable rules or private student records. */
+curriculumRouter.get('/admin/curricula', requireAuth, requireRole('ADMIN'), async (_req, res) => {
+ try {
+  const curricula = await CurriculumRecord.find({})
+   .select('programme track version status validationIssues sourceWorkbookHash updatedAt -_id')
+   .sort({ programme: 1, track: 1, version: -1 }).limit(200).lean();
+  res.json({ curricula });
+ } catch { res.status(503).json({ error: 'CURRICULUM_UNAVAILABLE' }); }
+});
+
+/** Student-scoped, read-only availability; never claims a graduation decision. */
+curriculumRouter.get('/students/me/curriculum', requireAuth, async (req: AuthenticatedRequest, res) => {
+ if (req.auth?.role !== 'STUDENT' || !req.auth.studentId) {
+  res.status(403).json({ error: 'FORBIDDEN' }); return;
+ }
+ try {
+  const student = await Student.findOne({ studentId: req.auth.studentId })
+   .select('programme track yearGroup -_id').lean();
+  if (!student) { res.status(404).json({ error: 'STUDENT_NOT_FOUND' }); return; }
+  const curricula = await CurriculumRecord.find({
+   programme: student.programme, track: student.track ?? 'standard', status: 'REVIEWED',
+   validationIssues: { $size: 0 }
+  }).select('programme track version status updatedAt -_id').sort({ version: -1 }).limit(20).lean();
+  res.json({
+   programme: student.programme, track: student.track ?? 'standard', yearGroup: student.yearGroup,
+   curricula, assessmentStatus: 'NOT_YET_CALCULATED', officialCertification: false
+  });
+ } catch { res.status(503).json({ error: 'CURRICULUM_UNAVAILABLE' }); }
+});
