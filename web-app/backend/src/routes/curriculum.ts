@@ -6,6 +6,7 @@ import { mapEnrollmentTranscript, type EnrollmentRecord } from '../domain/eligib
 import { previewAcademicProgress } from '../domain/eligibility/academic-preview.js';
 import type { ProgrammeRules } from '../domain/eligibility/programme-audit.js';
 import { selectCohortCurriculum, type CohortCurriculum } from '../domain/eligibility/cohort-selection.js';
+import { previewGpa } from '../domain/eligibility/gpa-preview.js';
 
 export const curriculumRouter = Router();
 
@@ -92,12 +93,18 @@ curriculumRouter.get('/students/me/academic-preview', requireAuth, async (req: A
   const selected = selection.selectedVersion
    ? curricula.find(c => c.version === selection.selectedVersion)
    : undefined;
-  const preview = previewAcademicProgress(records as EnrollmentRecord[], selected?.rules as ProgrammeRules | undefined ?? null);
+  const enrollmentRecords = records as EnrollmentRecord[];
+  const preview = previewAcademicProgress(enrollmentRecords, selected?.rules as ProgrammeRules | undefined ?? null);
+  const transcript = mapEnrollmentTranscript(enrollmentRecords);
+  const gpa = transcript.issues.length
+   ? { gpa: null, gradedCredits: 0, issues: transcript.issues }
+   : previewGpa(transcript.entries);
   const issues = [...preview.issues];
   if (selection.issue) issues.push(selection.issue);
   res.json({
    programme: student.programme, track, yearGroup: student.yearGroup,
    curriculumVersion: selected?.version ?? null,
+   exploratoryGpa: gpa,
    ...preview,
    status: issues.length ? 'INSUFFICIENT_DATA' : preview.status,
    issues,
