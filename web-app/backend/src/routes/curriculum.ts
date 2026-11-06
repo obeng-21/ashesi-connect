@@ -9,6 +9,7 @@ import type { ProgrammeRules } from '../domain/eligibility/programme-audit.js';
 import { selectCohortCurriculum, type CohortCurriculum } from '../domain/eligibility/cohort-selection.js';
 import { previewGpa } from '../domain/eligibility/gpa-preview.js';
 import { planCurriculumReview } from '../domain/eligibility/curriculum-review.js';
+import { isCurriculumReviewEnabled } from '../domain/eligibility/review-feature-gate.js';
 import type { CurriculumVersion } from '../domain/eligibility/curriculum-version.js';
 
 export const curriculumRouter = Router();
@@ -28,7 +29,7 @@ const reviewRequestSchema = z.object({
 curriculumRouter.post('/admin/curricula/review', requireAuth, requireRole('ADMIN'), async (req: AuthenticatedRequest, res) => {
  // Fail closed until a deployment operator explicitly enables this workflow.
  // Enabling the flag is not itself proof of Registry reviewer authorization.
- if (process.env.ENABLE_CURRICULUM_REVIEW !== 'yes') {
+ if (!isCurriculumReviewEnabled(process.env.ENABLE_CURRICULUM_REVIEW)) {
   res.status(503).json({ error:'CURRICULUM_REVIEW_DISABLED' }); return;
  }
  const parsed = reviewRequestSchema.safeParse(req.body);
