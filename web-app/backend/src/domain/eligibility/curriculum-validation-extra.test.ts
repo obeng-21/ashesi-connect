@@ -1,0 +1,30 @@
+import { describe, expect, it } from 'vitest';
+import { validateCurriculum, type CurriculumVersion } from './curriculum-version.js';
+
+function fixture(): CurriculumVersion {
+ return {
+  version:'2028-v1',status:'DRAFT',
+  rules:{programme:'CS',track:'standard',totalCredits:4,verifiedByRegistry:false,
+   requiredCourses:[{courseCode:'CS101',credits:1,minimumGrade:'D+',category:'Major'}],
+   electivePools:[{category:'General',creditsRequired:1,courseCodes:['E101','E102']}]},
+  sources:[{sourceUrl:'https://example.edu/catalogue',sourceKind:'OFFICIAL_WEBSITE',
+   retrievedAt:'2026-11-06T00:00:00.000Z',effectiveYear:2028,contentHash:'sha256-test'}]
+ };
+}
+describe('curriculum elective allocation safeguards',()=>{
+ it('accepts non-overlapping elective choices',()=>{
+  expect(validateCurriculum(fixture()).valid).toBe(true);
+ });
+ it('rejects duplicate courses within an elective pool',()=>{
+  const input=fixture();input.rules.electivePools[0].courseCodes=['E101','E101'];
+  expect(validateCurriculum(input).issues).toContain('DUPLICATE_ELECTIVE_COURSE');
+ });
+ it('rejects the same elective course in multiple pools',()=>{
+  const input=fixture();input.rules.electivePools.push({category:'Other',creditsRequired:1,courseCodes:['E101']});
+  expect(validateCurriculum(input).issues).toContain('ELECTIVE_COURSE_IN_MULTIPLE_POOLS');
+ });
+ it('rejects impossible African Studies minima',()=>{
+  const input=fixture();input.rules.electivePools[0].africanStudiesMinimum=3;
+  expect(validateCurriculum(input).issues).toContain('INVALID_AFRICAN_STUDIES_MINIMUM');
+ });
+});
