@@ -31,8 +31,10 @@ curriculumRouter.post('/admin/curricula/review', requireAuth, requireRole('ADMIN
  if (!req.auth?.sub) { res.status(401).json({ error:'UNAUTHORIZED' }); return; }
  try {
   const { programme, track, version, evidenceReference } = parsed.data;
-  const record = await CurriculumRecord.findOne({ programme, track, version }).lean();
-  if (!record) { res.status(404).json({ error:'CURRICULUM_NOT_FOUND' }); return; }
+  const matches = await CurriculumRecord.find({ programme, track, version }).limit(2).lean();
+  if (!matches.length) { res.status(404).json({ error:'CURRICULUM_NOT_FOUND' }); return; }
+  if (matches.length !== 1) { res.status(409).json({ error:'AMBIGUOUS_CURRICULUM_RECORD' }); return; }
+  const record = matches[0];
   const curriculum: CurriculumVersion = {
    version: String(record.version),
    status: record.status === 'DRAFT' ? 'DRAFT' : record.status === 'REVIEWED' ? 'REVIEWED' : 'SUPERSEDED',
