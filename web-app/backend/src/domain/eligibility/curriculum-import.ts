@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { validateCurriculum, type CurriculumVersion } from '../domain/eligibility/curriculum-version.js';
 import { toCurriculumDraft } from '../models/curriculum.js';
 
-const grade = z.enum(['A+','A','B+','B','C+','C','D+','D','E','F']);
+const grade = z.enum(['A+','A','B+','B','C+','C','D+','D' ,'E']);
 const rule = z.object({
  courseCode: z.string().trim().min(1).max(32),
  credits: z.number().finite().positive().max(10),
