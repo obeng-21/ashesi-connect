@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { evaluate, isPassing, type Requirement } from './engine';
+import { evaluate, isPassing, type Requirement } from './engine.js';
 const req: Requirement[] = [{courseCode:'DEMO-101',credits:1,minPassingGrade:'D+',category:'Core'},{courseCode:'DEMO-201',credits:1,minPassingGrade:'C',category:'Major'}];
 describe('graduation audit starter',()=>{
   it('treats D+ as passing when minimum is D+',()=>expect(isPassing('D+','D+')).toBe(true));
