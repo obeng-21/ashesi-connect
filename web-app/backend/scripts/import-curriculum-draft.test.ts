@@ -14,6 +14,9 @@ describe('controlled import CLI', () => {
   expect(() => parseImportArgs(['draft.json', '--write', '--write'])).toThrow();
   expect(() => parseImportArgs(['--write'])).toThrow();
   expect(() => parseImportArgs(['draft.json', 'another.json'])).toThrow();
+  expect(() => parseImportArgs(['--write', 'draft.json'])).toThrow();
+  expect(() => parseImportArgs(['draft.json', '--write', 'another.json'])).toThrow();
+  expect(() => parseImportArgs(['draft.json', '--dry-run'])).toThrow();
  });
 });
 
@@ -29,6 +32,8 @@ describe('curriculum draft database isolation', () => {
    'mongodb+srv://user:password@cluster.example.net/production',
    'mongodb+srv://user:password@cluster.example.net/ashesi_graduation_staging_backup',
    'mongodb+srv://user:password@cluster.example.net/ashesi_graduation_staging/extra',
+   'mongodb+srv://user:password@cluster.example.net/ashesi_graduation_staging%2Fproduction',
+   'mongodb+srv://user:password@cluster.example.net/ashesi_graduation_staging_backup?retryWrites=true',
    'https://cluster.example.net/ashesi_graduation_staging',
    'not-a-uri'
   ]) expect(() => assertStagingCurriculumUri(uri)).toThrow();
