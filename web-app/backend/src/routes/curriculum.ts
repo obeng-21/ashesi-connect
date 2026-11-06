@@ -89,7 +89,15 @@ curriculumRouter.get('/students/me/academic-preview', requireAuth, async (req: A
     validationIssues: { $size: 0 }
    }).select('version rules status validationIssues sources -_id').limit(200).lean()
   ]);
-  const selection = selectCohortCurriculum(student.yearGroup, curricula as CohortCurriculum[]);
+  const cohortCandidates: CohortCurriculum[] = curricula.map(c => ({
+   version: String(c.version),
+   status: c.status === 'REVIEWED' ? 'REVIEWED' : c.status === 'SUPERSEDED' ? 'SUPERSEDED' : 'DRAFT',
+   validationIssues: Array.isArray(c.validationIssues) ? c.validationIssues.map(String) : ['INVALID_VALIDATION_ISSUES'],
+   sources: Array.isArray(c.sources) ? c.sources.map((s: { effectiveYear?: unknown }) => ({
+    effectiveYear: typeof s.effectiveYear === 'number' ? s.effectiveYear : Number.NaN
+   })) : []
+  }));
+  const selection = selectCohortCurriculum(student.yearGroup, cohortCandidates);
   const selected = selection.selectedVersion
    ? curricula.find(c => c.version === selection.selectedVersion)
    : undefined;
