@@ -67,4 +67,25 @@ describe('provisional academic progress preview',()=>{
   expect(result.audit).toBeNull();
   expect(result.officialCertification).toBe(false);
  });
+ it('fails closed when a completed attempt has invalid credits',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[{credits:0,grade:'A',status:'COMPLETED'}]}],rules);
+  expect(result.status).toBe('INSUFFICIENT_DATA');
+  expect(result.issues).toContain('INVALID_CREDITS:CS101');
+  expect(result.audit).toBeNull();
+  expect(result.officialCertification).toBe(false);
+ });
+ it('fails closed on unknown transcript statuses',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[{credits:1,grade:'A',status:'TRANSFER_PENDING'}]}],rules);
+  expect(result.status).toBe('INSUFFICIENT_DATA');
+  expect(result.issues).toContain('UNKNOWN_STATUS:CS101');
+  expect(result.audit).toBeNull();
+  expect(result.officialCertification).toBe(false);
+ });
+ it('fails closed on mixed valid and malformed transcript attempts',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[{credits:1,grade:'A',status:'COMPLETED'},{credits:1,grade:'P',status:'COMPLETED'}]}],rules);
+  expect(result.status).toBe('INSUFFICIENT_DATA');
+  expect(result.issues).toContain('UNKNOWN_GRADE:CS101');
+  expect(result.audit).toBeNull();
+  expect(result.officialCertification).toBe(false);
+ });
 });
