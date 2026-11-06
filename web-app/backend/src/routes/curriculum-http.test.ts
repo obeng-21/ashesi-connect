@@ -50,6 +50,29 @@ describe('curriculum review HTTP authorization gates', () => {
   expect(response.status).toBe(403);
   expect((await response.json()).error).toBe('FORBIDDEN');
  });
+ it('rejects invalid bearer tokens',async () => {
+  const response = await review('not-a-jwt');
+  expect(response.status).toBe(401);
+  expect((await response.json()).error).toBe('UNAUTHORIZED');
+ });
+ it('denies unauthenticated curriculum catalogue reads',async () => {
+  const response = await fetch(baseUrl+'/api/v1/admin/curricula');
+  expect(response.status).toBe(401);
+ });
+ it('denies student curriculum catalogue reads',async () => {
+  const token = issueAccessToken({id:'student-1',role:'STUDENT',studentId:'student-1'});
+  const response = await fetch(baseUrl+'/api/v1/admin/curricula',{
+   headers:{Authorization:'Bearer '+token}
+  });
+  expect(response.status).toBe(403);
+ });
+ it('denies admin access to student-scoped preview without querying student data',async () => {
+  const token = issueAccessToken({id:'admin-1',role:'ADMIN'});
+  const response = await fetch(baseUrl+'/api/v1/students/me/academic-preview',{
+   headers:{Authorization:'Bearer '+token}
+  });
+  expect(response.status).toBe(403);
+ });
  it('returns a disabled response to admins by default',async () => {
   const token = issueAccessToken({id:'admin-1',role:'ADMIN'});
   const response = await review(token);
