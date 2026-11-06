@@ -10,6 +10,7 @@ import { selectCohortCurriculum, type CohortCurriculum } from '../domain/eligibi
 import { previewGpa } from '../domain/eligibility/gpa-preview.js';
 import { planCurriculumReview } from '../domain/eligibility/curriculum-review.js';
 import { isCurriculumReviewEnabled } from '../domain/eligibility/review-feature-gate.js';
+import { isAllowedCurriculumReviewer } from '../domain/eligibility/reviewer-allowlist.js';
 import type { CurriculumVersion } from '../domain/eligibility/curriculum-version.js';
 
 export const curriculumRouter = Router();
@@ -35,6 +36,9 @@ curriculumRouter.post('/admin/curricula/review', requireAuth, requireRole('ADMIN
  const parsed = reviewRequestSchema.safeParse(req.body);
  if (!parsed.success) { res.status(400).json({ error:'INVALID_INPUT' }); return; }
  if (!req.auth?.sub) { res.status(401).json({ error:'UNAUTHORIZED' }); return; }
+ if (!isAllowedCurriculumReviewer(req.auth.sub, process.env.CURRICULUM_REVIEWER_IDS)) {
+  res.status(403).json({ error:'REVIEWER_NOT_AUTHORIZED' }); return;
+ }
  try {
   const { programme, track, version, evidenceReference } = parsed.data;
   const matches = await CurriculumRecord.find({ programme, track, version }).limit(2).lean();
