@@ -1,2 +1,20 @@
-# Render deployment is not enabled until the backend, database and frontend deployment configuration are implemented.
-services: []
+# Static demo only: no server, authentication, or real student records.
+services:
+  - type: web
+    name: ashesi-graduation-tracker-demo
+    runtime: static
+    repo: https://github.com/obeng-21/ashesi-connect
+    branch: main
+    buildCommand: echo "Publishing static Ashesi Graduation Tracker demo"
+    staticPublishPath: ./web-app/frontend
+    autoDeployTrigger: commit
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
