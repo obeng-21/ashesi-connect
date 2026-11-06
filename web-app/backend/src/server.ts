@@ -21,7 +21,7 @@ app.post('/api/v1/auth/login', async (req, res) => {
  try {
   const user = await authenticate(parsed.data.identifier, parsed.data.password);
   if (!user) { res.status(401).json({ error: 'INVALID_CREDENTIALS' }); return; }
-  res.json({ accessToken: issueAccessToken({ id: user.id, role: user.role as 'STUDENT'|'ADMIN', studentId: user.studentId }), role: user.role, forcePasswordChange: user.forcePasswordChange });
+  res.json({ accessToken: issueAccessToken({ id: user.id, role: user.role as 'STUDENT'|'ADMIN', studentId: user.studentId ?? undefined }), role: user.role, forcePasswordChange: user.forcePasswordChange });
  } catch { res.status(500).json({ error: 'INTERNAL_ERROR' }); }
 });
 app.get('/api/v1/students/me', requireAuth, async (req: AuthenticatedRequest, res) => {
