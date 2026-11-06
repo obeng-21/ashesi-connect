@@ -26,12 +26,15 @@ export function assertStagingCurriculumUri(uri: string) {
 }
 
 export function parseImportArgs(args: string[]) {
- if (args.length < 1 || args.length > 2 || args.some(x => x.startsWith('--') && x !== '--write')) {
-  throw new Error('Usage: import-curriculum-draft.ts <draft.json> [--write]');
+ const usage = 'Usage: import-curriculum-draft.ts <draft.json> [--write]';
+ // Accept exactly one positional file followed by an optional explicit write flag.
+ // Never silently ignore extra positional arguments or misplaced flags.
+ if (args.length < 1 || args.length > 2 ||
+     !args[0] || args[0].startsWith('--') ||
+     (args.length === 2 && args[1] !== '--write')) {
+  throw new Error(usage);
  }
- const file = args.find(x => x !== '--write');
- if (!file || args.filter(x => x === '--write').length > 1) throw new Error('Invalid import arguments');
- return { file, write: args.includes('--write') };
+ return { file: args[0], write: args.length === 2 };
 }
 
 async function main() {
