@@ -15,6 +15,16 @@ import mongoose from 'mongoose';
 import { planCurriculumDraftImport } from '../src/domain/eligibility/curriculum-import.js';
 import { CurriculumRecord } from '../src/models/curriculum.js';
 
+/** Refuse curriculum draft writes unless the URI explicitly selects isolated staging. */
+export function assertStagingCurriculumUri(uri: string) {
+ let parsed: URL;
+ try { parsed = new URL(uri); } catch { throw new Error('Invalid MongoDB URI'); }
+ if (!['mongodb:', 'mongodb+srv:'].includes(parsed.protocol) ||
+     decodeURIComponent(parsed.pathname.slice(1)) !== 'ashesi_graduation_staging') {
+  throw new Error('Curriculum draft writes require an explicit /ashesi_graduation_staging database in MONGODB_URI');
+ }
+}
+
 export function parseImportArgs(args: string[]) {
  if (args.length < 1 || args.length > 2 || args.some(x => x.startsWith('--') && x !== '--write')) {
   throw new Error('Usage: import-curriculum-draft.ts <draft.json> [--write]');
@@ -41,7 +51,12 @@ async function main() {
  if (process.env.ALLOW_CURRICULUM_DRAFT_WRITE !== 'yes' || !process.env.MONGODB_URI) {
   throw new Error('Writes require ALLOW_CURRICULUM_DRAFT_WRITE=yes and MONGODB_URI');
  }
+ assertStagingCurriculumUri(process.env.MONGODB_URI);
  await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 10000 });
+ if (mongoose.connection.db?.databaseName !== 'ashesi_graduation_staging') {
+  await mongoose.disconnect();
+  throw new Error('Connected database mismatch: refusing curriculum draft write');
+ }
  try {
   // Create-only. Unique programme/track/version index prevents duplicate imports.
   await CurriculumRecord.create(plan.draft);
