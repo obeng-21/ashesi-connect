@@ -40,4 +40,31 @@ describe('provisional academic progress preview',()=>{
   expect(result.provisionalOnly).toBe(true);
   expect(result.officialCertification).toBe(false);
  });
+ it('keeps enrolled required coursework provisional and outstanding',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[{credits:1,status:'ENROLLED'}]}],rules);
+  expect(result.status).toBe('REQUIREMENTS_OUTSTANDING');
+  expect(result.audit?.remainingRequirements).toEqual(expect.arrayContaining([expect.objectContaining({code:'CS101',reason:'IN_PROGRESS'})]));
+  expect(result.audit?.creditsInProgress).toBe(1);
+  expect(result.officialCertification).toBe(false);
+ });
+ it('keeps incomplete required coursework outstanding',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[{credits:1,status:'INCOMPLETE'}]}],rules);
+  expect(result.status).toBe('REQUIREMENTS_OUTSTANDING');
+  expect(result.audit?.remainingRequirements).toEqual(expect.arrayContaining([expect.objectContaining({code:'CS101',reason:'INCOMPLETE'})]));
+  expect(result.officialCertification).toBe(false);
+ });
+ it('fails closed on mismatched course codes in transcript attempts',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[{courseCode:'CS102',credits:1,grade:'A',status:'COMPLETED'}]}],rules);
+  expect(result.status).toBe('INSUFFICIENT_DATA');
+  expect(result.issues).toContain('COURSE_CODE_MISMATCH:CS101');
+  expect(result.audit).toBeNull();
+  expect(result.officialCertification).toBe(false);
+ });
+ it('fails closed on invalid curriculum rules without certifying',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[{credits:1,grade:'A',status:'COMPLETED'}]}],{...rules,totalCredits:0});
+  expect(result.status).toBe('INSUFFICIENT_DATA');
+  expect(result.issues).toContain('INVALID_CURRICULUM_OR_TRANSCRIPT');
+  expect(result.audit).toBeNull();
+  expect(result.officialCertification).toBe(false);
+ });
 });
