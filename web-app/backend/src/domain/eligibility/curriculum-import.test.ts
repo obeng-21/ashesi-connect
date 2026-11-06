@@ -10,4 +10,21 @@ describe('controlled curriculum import',()=>{
  it('rejects purported registry approval in imported data',()=>expect(planCurriculumDraftImport({...sample,rules:{...sample.rules,verifiedByRegistry:true}}).accepted).toBe(false));
  it('rejects contradictory credit totals',()=>expect(planCurriculumDraftImport({...sample,rules:{...sample.rules,totalCredits:1}}).issues).toContain('CREDIT_REQUIREMENTS_EXCEED_TOTAL'));
  it('rejects unknown fields',()=>expect(planCurriculumDraftImport({...sample,officialCertification:true}).accepted).toBe(false));
+ it('requires source provenance for every imported draft',()=>{
+  const result=planCurriculumDraftImport({...sample,sources:[]});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
+ it('rejects insecure source URLs',()=>{
+  const result=planCurriculumDraftImport({...sample,sources:[{...sample.sources[0],sourceUrl:'http://ashesi.edu.gh/'}]});
+  expect(result.accepted).toBe(false);
+ });
+ it('rejects malformed workbook fingerprints',()=>{
+  const result=planCurriculumDraftImport({...sample,sourceWorkbookHash:'not-a-sha256'});
+  expect(result.accepted).toBe(false);
+ });
+ it('cannot import a verified curriculum status',()=>{
+  const result=planCurriculumDraftImport({...sample,status:'VERIFIED'});
+  expect(result.accepted).toBe(false);
+ });
 });
