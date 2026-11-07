@@ -136,4 +136,19 @@ describe('controlled curriculum import',()=>{
   expect(result.accepted).toBe(false);
   expect(result.draft).toBeNull();
  });
+ it.each(['', '   '])('rejects missing curriculum version labels (%s)',version=>{
+  const result=planCurriculumDraftImport({...sample,version});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
+ it('rejects curriculum drafts without required courses',()=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,requiredCourses:[]}});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
+ it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY])('rejects invalid programme total credits (%s)',totalCredits=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,totalCredits}});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
 });
