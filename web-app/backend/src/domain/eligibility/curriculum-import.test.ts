@@ -27,4 +27,14 @@ describe('controlled curriculum import',()=>{
   const result=planCurriculumDraftImport({...sample,status:'VERIFIED'});
   expect(result.accepted).toBe(false);
  });
+ it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])('rejects non-finite required-course credits during draft import (%s)', credits=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,requiredCourses:[{...sample.rules.requiredCourses[0],credits}]}});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
+ it.each(['', '   '])('rejects blank required-course codes during draft import (%s)',courseCode=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,requiredCourses:[{...sample.rules.requiredCourses[0],courseCode}]}});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
 });
