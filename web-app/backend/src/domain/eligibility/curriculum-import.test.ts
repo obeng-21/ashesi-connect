@@ -171,4 +171,22 @@ describe('controlled curriculum import',()=>{
   expect(result.accepted).toBe(false);
   expect(result.draft).toBeNull();
  });
+ it('rejects more than the allowed source provenance records',()=>{
+  const sources=Array.from({length:31},(_,index)=>({...sample.sources[0],contentHash:`source-${index}`}));
+  const result=planCurriculumDraftImport({...sample,sources});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
+ it('rejects oversized elective course option lists',()=>{
+  const courseCodes=Array.from({length:501},(_,index)=>`EL${index}`);
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,electivePools:[{...sample.rules.electivePools[0],courseCodes}]}});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
+ it('rejects oversized required course lists before producing a draft',()=>{
+  const requiredCourses=Array.from({length:501},(_,index)=>({...sample.rules.requiredCourses[0],courseCode:`CS${index}`}));
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,requiredCourses}});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
 });
