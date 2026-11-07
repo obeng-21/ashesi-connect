@@ -230,4 +230,20 @@ describe('provisional academic progress preview',()=>{
   expect(result.audit).toBeNull();
   expect(result.officialCertification).toBe(false);
  });
+ it('rejects an unsupported required-course minimum grade',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[{credits:1,grade:'A',status:'COMPLETED'}]}],{
+   ...rules,requiredCourses:[{...rules.requiredCourses[0],minimumGrade:'INVALID' as any}]
+  });
+  expect(result.status).toBe('INSUFFICIENT_DATA');
+  expect(result.audit).toBeNull();
+  expect(result.officialCertification).toBe(false);
+ });
+ it('rejects an unsupported elective minimum grade',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[{credits:1,grade:'A',status:'COMPLETED'}]}],{
+   ...rules,electivePools:[{category:'Elective',creditsRequired:1,courseCodes:['EL101'],minimumGrade:'INVALID' as any}]
+  });
+  expect(result.status).toBe('INSUFFICIENT_DATA');
+  expect(result.audit).toBeNull();
+  expect(result.officialCertification).toBe(false);
+ });
 });
