@@ -156,4 +156,19 @@ describe('controlled curriculum import',()=>{
   expect(result.accepted).toBe(false);
   expect(result.draft).toBeNull();
  });
+ it.each(['', '   '])('rejects blank programme identifiers (%s)',programme=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,programme}});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
+ it.each(['', '   '])('rejects blank curriculum track identifiers (%s)',track=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,track}});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
+ it('rejects a draft without source provenance even when a workbook fingerprint is present',()=>{
+  const result=planCurriculumDraftImport({...sample,sourceWorkbookHash:'a'.repeat(64),sources:[]});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
 });
