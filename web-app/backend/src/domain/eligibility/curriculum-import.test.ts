@@ -126,4 +126,14 @@ describe('controlled curriculum import',()=>{
   expect(result.draft).toBeNull();
   if (africanStudiesMinimum === 2) expect(result.issues).toContain('INVALID_AFRICAN_STUDIES_MINIMUM');
  });
+ it.each([
+  ['unsupported provenance kind', {sourceKind:'USER_ASSERTED'}],
+  ['invalid retrieval timestamp', {retrievedAt:'not-a-date'}],
+  ['non-integer effective year', {effectiveYear:2028.5}],
+  ['blank content fingerprint', {contentHash:'   '}]
+ ])('rejects %s in curriculum source provenance',(_label,sourceOverride)=>{
+  const result=planCurriculumDraftImport({...sample,sources:[{...sample.sources[0],...sourceOverride}]});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
 });
