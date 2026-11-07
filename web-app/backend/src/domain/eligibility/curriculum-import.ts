@@ -17,7 +17,9 @@ const pool = z.object({
  minimumGrade: grade.optional()
 }).strict();
 const source = z.object({
- sourceUrl: z.string().url().startsWith('https://'),
+ sourceUrl: z.string().url().startsWith('https://').refine(value => {
+  try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password; } catch { return false; }
+ }, 'Source URL must be HTTPS without embedded credentials'),
  sourceKind: z.enum(['OFFICIAL_WEBSITE','REGISTRY_PROVIDED_WORKBOOK']),
  retrievedAt: z.string().datetime(),
  effectiveYear: z.number().int().min(2000).max(2200),
