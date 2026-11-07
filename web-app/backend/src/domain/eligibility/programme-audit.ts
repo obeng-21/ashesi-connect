@@ -25,7 +25,7 @@ export function evaluateProgramme(transcript: TranscriptEntry[], rules: Programm
  if (!Number.isFinite(rules.totalCredits) || rules.totalCredits <= 0) throw Error('Invalid total credits');
  const seen = new Set<string>();
  for (const r of rules.requiredCourses) {
-  if (!r.courseCode || seen.has(r.courseCode) || r.credits <= 0) throw Error('Invalid or duplicate required course');
+  if (!r.courseCode.trim() || seen.has(r.courseCode) || !Number.isFinite(r.credits) || r.credits <= 0 || !gradeRank.includes(r.minimumGrade)) throw Error('Invalid or duplicate required course');
   seen.add(r.courseCode);
  }
  const remainingRequirements: Remaining[] = [];
@@ -47,7 +47,7 @@ export function evaluateProgramme(transcript: TranscriptEntry[], rules: Programm
   remainingRequirements.push({ code: rule.courseCode, category: rule.category, credits: rule.credits, reason: active ? 'IN_PROGRESS' : attempts.some(e => e.status === 'INCOMPLETE') ? 'INCOMPLETE' : attempts.some(e => e.grade) ? 'FAILED' : 'NOT_TAKEN' });
  }
  for (const pool of rules.electivePools) {
-  if (pool.creditsRequired < 0) throw Error('Invalid elective requirement');
+  if (!Number.isFinite(pool.creditsRequired) || pool.creditsRequired < 0 || (pool.minimumGrade !== undefined && !gradeRank.includes(pool.minimumGrade))) throw Error('Invalid elective requirement');
   const eligible = transcript.filter(e => pool.courseCodes.includes(e.courseCode) && passes(e.grade, pool.minimumGrade ?? 'D'));
   const distinct = new Map<string, TranscriptEntry>();
   for (const e of eligible) if (!distinct.has(e.courseCode) || distinct.get(e.courseCode)!.attempt < e.attempt) distinct.set(e.courseCode,e);
