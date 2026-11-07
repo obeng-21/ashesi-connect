@@ -205,4 +205,17 @@ describe('controlled curriculum import',()=>{
   expect(result.accepted).toBe(false);
   expect(result.draft).toBeNull();
  });
+ it('does not mutate source data while planning a provisional draft',()=>{
+  const input=structuredClone(sample);
+  const before=structuredClone(input);
+  const result=planCurriculumDraftImport(input);
+  expect(result.accepted).toBe(true);
+  expect(input).toEqual(before);
+  expect(result.draft?.status).toBe('DRAFT');
+ });
+ it.each([null,undefined,[],42,'not a curriculum'])('rejects non-object curriculum payloads (%s)',raw=>{
+  const result=planCurriculumDraftImport(raw);
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
 });
