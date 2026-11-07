@@ -189,4 +189,20 @@ describe('controlled curriculum import',()=>{
   expect(result.accepted).toBe(false);
   expect(result.draft).toBeNull();
  });
+ it('rejects more than 100 elective pools before creating a draft',()=>{
+  const electivePools=Array.from({length:101},(_,index)=>({category:`Elective ${index}`,creditsRequired:0,courseCodes:[]}));
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,electivePools}});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
+ it.each([0,-1,10.01])('rejects out-of-range required-course credits (%s)',credits=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,requiredCourses:[{...sample.rules.requiredCourses[0],credits}]}});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
+ it.each([1999,2201])('rejects out-of-range curriculum effective years (%s)',effectiveYear=>{
+  const result=planCurriculumDraftImport({...sample,sources:[{...sample.sources[0],effectiveYear}]});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
 });
