@@ -218,4 +218,18 @@ describe('controlled curriculum import',()=>{
   expect(result.accepted).toBe(false);
   expect(result.draft).toBeNull();
  });
+ it.each([2000,2200])('accepts valid effective-year boundary %s as an unverified draft',effectiveYear=>{
+  const result=planCurriculumDraftImport({...sample,sources:[{...sample.sources[0],effectiveYear}]});
+  expect(result.accepted).toBe(true);
+  expect(result.issues).toEqual([]);
+  expect(result.draft?.status).toBe('DRAFT');
+  expect(result.draft?.rules.verifiedByRegistry).toBe(false);
+ });
+ it('accepts the maximum 30 provenance records without granting certification',()=>{
+  const sources=Array.from({length:30},(_,index)=>({...sample.sources[0],contentHash:`source-${index}`}));
+  const result=planCurriculumDraftImport({...sample,sources});
+  expect(result.accepted).toBe(true);
+  expect(result.draft?.status).toBe('DRAFT');
+  expect(result.draft?.rules.verifiedByRegistry).toBe(false);
+ });
 });
