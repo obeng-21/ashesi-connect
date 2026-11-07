@@ -73,4 +73,22 @@ describe('controlled curriculum import',()=>{
   expect(result.accepted).toBe(false);
   expect(result.draft).toBeNull();
  });
+ it('rejects a required course reused as an elective option',()=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,electivePools:[{...sample.rules.electivePools[0],courseCodes:['CS101']}]}});
+  expect(result.accepted).toBe(false);
+  expect(result.issues).toContain('REQUIRED_COURSE_IN_ELECTIVE_POOL');
+  expect(result.draft).toBeNull();
+ });
+ it('rejects duplicate elective options within one pool',()=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,electivePools:[{...sample.rules.electivePools[0],courseCodes:['EL101','EL101']}]}});
+  expect(result.accepted).toBe(false);
+  expect(result.issues).toContain('DUPLICATE_ELECTIVE_COURSE');
+  expect(result.draft).toBeNull();
+ });
+ it('rejects elective courses appearing in multiple pools',()=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,totalCredits:3,electivePools:[sample.rules.electivePools[0],{category:'Second Elective',creditsRequired:1,courseCodes:['EL101']}]}});
+  expect(result.accepted).toBe(false);
+  expect(result.issues).toContain('ELECTIVE_COURSE_IN_MULTIPLE_POOLS');
+  expect(result.draft).toBeNull();
+ });
 });
