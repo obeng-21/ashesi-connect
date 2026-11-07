@@ -52,4 +52,15 @@ describe('controlled curriculum import',()=>{
   expect(result.accepted).toBe(false);
   expect(result.draft).toBeNull();
  });
+
+ it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])('rejects non-finite African Studies minimum credits during draft import (%s)', africanStudiesMinimum=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,electivePools:[{...sample.rules.electivePools[0],africanStudiesMinimum}]}});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
+ it.each(['', '   '])('rejects blank elective-pool course codes during draft import (%s)',courseCode=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,electivePools:[{...sample.rules.electivePools[0],courseCodes:[courseCode]}]}});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
 });
