@@ -185,4 +185,13 @@ describe('provisional academic progress preview',()=>{
   expect(result.audit).toBeNull();
   expect(result.officialCertification).toBe(false);
  });
+ it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])('fails closed for non-finite elective credit requirement %s',creditsRequired=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[{credits:1,grade:'A',status:'COMPLETED'}]}],{
+   ...rules,electivePools:[{category:'Elective',creditsRequired,courseCodes:['EL101']}]
+  });
+  expect(result.status).toBe('INSUFFICIENT_DATA');
+  expect(result.issues).toContain('INVALID_CURRICULUM_OR_TRANSCRIPT');
+  expect(result.audit).toBeNull();
+  expect(result.officialCertification).toBe(false);
+ });
 });
