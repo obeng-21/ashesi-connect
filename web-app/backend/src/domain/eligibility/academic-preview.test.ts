@@ -212,4 +212,13 @@ describe('provisional academic progress preview',()=>{
   expect(result.audit).toBeNull();
   expect(result.officialCertification).toBe(false);
  });
+ it.each([Number.NaN,Number.POSITIVE_INFINITY,Number.NEGATIVE_INFINITY])('rejects non-finite required-course credits %s',credits=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[{credits:1,grade:'A',status:'COMPLETED'}]}],{
+   ...rules,requiredCourses:[{...rules.requiredCourses[0],credits}]
+  });
+  expect(result.status).toBe('INSUFFICIENT_DATA');
+  expect(result.issues).toContain('INVALID_CURRICULUM_OR_TRANSCRIPT');
+  expect(result.audit).toBeNull();
+  expect(result.officialCertification).toBe(false);
+ });
 });
