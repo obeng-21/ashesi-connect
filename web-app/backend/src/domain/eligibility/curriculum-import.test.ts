@@ -109,4 +109,21 @@ describe('controlled curriculum import',()=>{
   expect(result.issues).toContain('EMPTY_ELECTIVE_OPTIONS');
   expect(result.draft).toBeNull();
  });
+ it('preserves draft-only, unverified authority for accepted curriculum imports',()=>{
+  const result=planCurriculumDraftImport({...sample,sourceWorkbookHash:'a'.repeat(64)});
+  expect(result.accepted).toBe(true);
+  expect(result.issues).toEqual([]);
+  expect(result.draft).toMatchObject({
+   status:'DRAFT',
+   rules:{verifiedByRegistry:false},
+   sourceWorkbookHash:'a'.repeat(64)
+  });
+  expect(result.draft?.validationIssues).toEqual([]);
+ });
+ it.each([-1, 1.5, 2])('rejects invalid African Studies minimum course counts (%s)',africanStudiesMinimum=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,electivePools:[{...sample.rules.electivePools[0],africanStudiesMinimum}]}});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+  if (africanStudiesMinimum === 2) expect(result.issues).toContain('INVALID_AFRICAN_STUDIES_MINIMUM');
+ });
 });
