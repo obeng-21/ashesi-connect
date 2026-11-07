@@ -47,7 +47,7 @@ export function evaluateProgramme(transcript: TranscriptEntry[], rules: Programm
   remainingRequirements.push({ code: rule.courseCode, category: rule.category, credits: rule.credits, reason: active ? 'IN_PROGRESS' : attempts.some(e => e.status === 'INCOMPLETE') ? 'INCOMPLETE' : attempts.some(e => e.grade) ? 'FAILED' : 'NOT_TAKEN' });
  }
  for (const pool of rules.electivePools) {
-  if (pool.creditsRequired < 0) throw Error('Invalid elective requirement');
+  if (!Number.isFinite(pool.creditsRequired) || pool.creditsRequired < 0) throw Error('Invalid elective requirement');
   const eligible = transcript.filter(e => pool.courseCodes.includes(e.courseCode) && passes(e.grade, pool.minimumGrade ?? 'D'));
   const distinct = new Map<string, TranscriptEntry>();
   for (const e of eligible) if (!distinct.has(e.courseCode) || distinct.get(e.courseCode)!.attempt < e.attempt) distinct.set(e.courseCode,e);
