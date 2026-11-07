@@ -91,4 +91,22 @@ describe('controlled curriculum import',()=>{
   expect(result.issues).toContain('ELECTIVE_COURSE_IN_MULTIPLE_POOLS');
   expect(result.draft).toBeNull();
  });
+ it('rejects duplicate required course codes in a draft',()=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,totalCredits:3,requiredCourses:[sample.rules.requiredCourses[0],{...sample.rules.requiredCourses[0]}]}});
+  expect(result.accepted).toBe(false);
+  expect(result.issues).toContain('DUPLICATE_OR_EMPTY_REQUIRED_COURSE');
+  expect(result.draft).toBeNull();
+ });
+ it('rejects duplicate elective pool categories',()=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,totalCredits:3,electivePools:[sample.rules.electivePools[0],{category:'Elective',creditsRequired:1,courseCodes:['EL102']}]}});
+  expect(result.accepted).toBe(false);
+  expect(result.issues).toContain('DUPLICATE_OR_EMPTY_ELECTIVE_POOL');
+  expect(result.draft).toBeNull();
+ });
+ it('rejects elective credit requirements without any course options',()=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,electivePools:[{...sample.rules.electivePools[0],courseCodes:[]}]}});
+  expect(result.accepted).toBe(false);
+  expect(result.issues).toContain('EMPTY_ELECTIVE_OPTIONS');
+  expect(result.draft).toBeNull();
+ });
 });
