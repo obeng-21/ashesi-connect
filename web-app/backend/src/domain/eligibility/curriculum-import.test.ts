@@ -37,4 +37,19 @@ describe('controlled curriculum import',()=>{
   expect(result.accepted).toBe(false);
   expect(result.draft).toBeNull();
  });
+ it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])('rejects non-finite elective credit requirements during draft import (%s)', creditsRequired=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,electivePools:[{...sample.rules.electivePools[0],creditsRequired}]}});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
+ it.each(['F', 'P', 'INVALID'])('rejects unsupported required-course minimum grades during draft import (%s)', minimumGrade=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,requiredCourses:[{...sample.rules.requiredCourses[0],minimumGrade}]}});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
+ it('rejects unsupported elective minimum grades during draft import',()=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,electivePools:[{...sample.rules.electivePools[0],minimumGrade:'INVALID'}]}});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
 });
