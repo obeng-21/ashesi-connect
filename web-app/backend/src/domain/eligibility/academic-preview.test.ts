@@ -171,4 +171,18 @@ describe('provisional academic progress preview',()=>{
   expect(result.audit?.eligibilityDetermined).toBe(false);
   expect(result.officialCertification).toBe(false);
  });
+ it('fails closed when a transcript contains a blank course code',()=>{
+  const result=previewAcademicProgress([{courseCode:' ',attempts:[{credits:1,grade:'A',status:'COMPLETED'}]}],rules);
+  expect(result.status).toBe('INSUFFICIENT_DATA');
+  expect(result.issues).toContain('EMPTY_COURSE_CODE');
+  expect(result.audit).toBeNull();
+  expect(result.officialCertification).toBe(false);
+ });
+ it('fails closed when a completed attempt has non-finite credits',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[{credits:Number.NaN,grade:'A',status:'COMPLETED'}]}],rules);
+  expect(result.status).toBe('INSUFFICIENT_DATA');
+  expect(result.issues).toContain('INVALID_CREDITS:CS101');
+  expect(result.audit).toBeNull();
+  expect(result.officialCertification).toBe(false);
+ });
 });
