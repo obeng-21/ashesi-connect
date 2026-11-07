@@ -25,7 +25,7 @@ export function evaluateProgramme(transcript: TranscriptEntry[], rules: Programm
  if (!Number.isFinite(rules.totalCredits) || rules.totalCredits <= 0) throw Error('Invalid total credits');
  const seen = new Set<string>();
  for (const r of rules.requiredCourses) {
-  if (!r.courseCode || seen.has(r.courseCode) || !Number.isFinite(r.credits) || r.credits <= 0) throw Error('Invalid or duplicate required course');
+  if (!r.courseCode.trim() || seen.has(r.courseCode) || !Number.isFinite(r.credits) || r.credits <= 0) throw Error('Invalid or duplicate required course');
   seen.add(r.courseCode);
  }
  const remainingRequirements: Remaining[] = [];
