@@ -8,21 +8,21 @@ const rule = z.object({
  credits: z.number().finite().positive().max(10),
  minimumGrade: grade,
  category: z.string().trim().min(1).max(100)
-});
+}).strict();
 const pool = z.object({
  category: z.string().trim().min(1).max(100),
  creditsRequired: z.number().finite().nonnegative().max(100),
  courseCodes: z.array(z.string().trim().min(1).max(32)).max(500),
  africanStudiesMinimum: z.number().finite().nonnegative().optional(),
  minimumGrade: grade.optional()
-});
+}).strict();
 const source = z.object({
  sourceUrl: z.string().url().startsWith('https://'),
  sourceKind: z.enum(['OFFICIAL_WEBSITE','REGISTRY_PROVIDED_WORKBOOK']),
  retrievedAt: z.string().datetime(),
  effectiveYear: z.number().int().min(2000).max(2200),
  contentHash: z.string().trim().min(1).max(256)
-});
+}).strict();
 export const curriculumDraftSchema = z.object({
  version: z.string().trim().min(1).max(100),
  status: z.literal('DRAFT'),
@@ -33,7 +33,7 @@ export const curriculumDraftSchema = z.object({
   verifiedByRegistry: z.literal(false),
   requiredCourses: z.array(rule).min(1).max(500),
   electivePools: z.array(pool).max(100)
- }),
+ }).strict(),
  sources: z.array(source).min(1).max(30),
  sourceWorkbookHash: z.string().regex(/^[a-f0-9]{64}$/i).optional()
 }).strict();
