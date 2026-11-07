@@ -63,4 +63,14 @@ describe('controlled curriculum import',()=>{
   expect(result.accepted).toBe(false);
   expect(result.draft).toBeNull();
  });
+ it.each([
+  ['required course', {rules:{...sample.rules,requiredCourses:[{...sample.rules.requiredCourses[0],officialCertification:true}]}}],
+  ['elective pool', {rules:{...sample.rules,electivePools:[{...sample.rules.electivePools[0],officialCertification:true}]}}],
+  ['source provenance', {sources:[{...sample.sources[0],officialCertification:true}]}],
+  ['curriculum rules', {rules:{...sample.rules,officialCertification:true}}]
+ ])('rejects unknown nested fields in %s',(_label,overrides)=>{
+  const result=planCurriculumDraftImport({...sample,...overrides});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
 });
