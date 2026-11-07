@@ -147,4 +147,28 @@ describe('provisional academic progress preview',()=>{
   ]));
   expect(result.officialCertification).toBe(false);
  });
+ it('keeps a passing required course satisfied when a later retake is incomplete',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[
+   {credits:1,grade:'B',status:'COMPLETED'},
+   {credits:1,status:'INCOMPLETE'}
+  ]}],rules);
+  expect(result.status).toBe('ACADEMIC_REQUIREMENTS_MET');
+  expect(result.audit?.creditsEarned).toBe(1);
+  expect(result.audit?.remainingRequirements).toEqual([]);
+  expect(result.audit?.eligibilityDetermined).toBe(false);
+  expect(result.officialCertification).toBe(false);
+ });
+ it('does not treat an in-progress retake as a completed pass after a failed attempt',()=>{
+  const result=previewAcademicProgress([{courseCode:'CS101',attempts:[
+   {credits:1,grade:'D',status:'COMPLETED'},
+   {credits:1,status:'ENROLLED'}
+  ]}],rules);
+  expect(result.status).toBe('REQUIREMENTS_OUTSTANDING');
+  expect(result.audit?.creditsEarned).toBe(0);
+  expect(result.audit?.remainingRequirements).toEqual(expect.arrayContaining([
+   expect.objectContaining({code:'CS101',reason:'IN_PROGRESS'})
+  ]));
+  expect(result.audit?.eligibilityDetermined).toBe(false);
+  expect(result.officialCertification).toBe(false);
+ });
 });
