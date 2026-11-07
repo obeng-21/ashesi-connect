@@ -151,4 +151,9 @@ describe('controlled curriculum import',()=>{
   expect(result.accepted).toBe(false);
   expect(result.draft).toBeNull();
  });
+ it.each(['https://user:password@ashesi.edu.gh/policy','https://user@ashesi.edu.gh/policy'])('rejects credential-bearing source URLs (%s)',sourceUrl=>{
+  const result=planCurriculumDraftImport({...sample,sources:[{...sample.sources[0],sourceUrl}]});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
 });
