@@ -244,4 +244,17 @@ describe('controlled curriculum import',()=>{
   expect(input.sources[0].contentHash).toBe(sample.sources[0].contentHash);
   expect(input.status).toBe('DRAFT');
  });
+ it('isolates accepted provisional drafts from later changes to caller-owned input',()=>{
+  const input=structuredClone(sample);
+  const result=planCurriculumDraftImport(input);
+  expect(result.accepted).toBe(true);
+  expect(result.draft).not.toBeNull();
+  input.rules.requiredCourses[0].courseCode='MODIFIED_AFTER_IMPORT';
+  input.sources[0].contentHash='modified-after-import';
+  expect(result.draft?.rules.requiredCourses[0].courseCode).toBe('CS101');
+  expect(result.draft?.sources[0].contentHash).toBe(sample.sources[0].contentHash);
+  expect(result.draft?.status).toBe('DRAFT');
+  expect(result.draft?.rules.verifiedByRegistry).toBe(false);
+ });
+
 });
