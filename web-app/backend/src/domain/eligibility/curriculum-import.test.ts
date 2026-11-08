@@ -338,4 +338,16 @@ describe('controlled curriculum import',()=>{
   expect(result.issues.length).toBeGreaterThan(0);
  });
 
+ it('accepts timezone-qualified provenance and uppercase SHA-256 fingerprints as provisional only',()=>{
+  const result=planCurriculumDraftImport({
+   ...sample,
+   sourceWorkbookHash:'A'.repeat(64),
+   sources:[{...sample.sources[0],retrievedAt:'2026-11-06T03:30:00+03:30',sourceUrl:'https://ashesi.edu.gh/curriculum/2028'}]
+  });
+  expect(result.accepted).toBe(true);
+  expect(result.issues).toEqual([]);
+  expect(result.draft?.status).toBe('DRAFT');
+  expect(result.draft?.rules.verifiedByRegistry).toBe(false);
+  expect(result.draft?.sourceWorkbookHash).toBe('A'.repeat(64));
+ });
 });
