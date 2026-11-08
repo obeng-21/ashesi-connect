@@ -40,6 +40,16 @@ describe('curriculum credit feasibility safeguards', () => {
   input.rules.totalCredits = 2;
   expect(validateCurriculum(input).valid).toBe(true);
  });
+ it('rejects non-finite published total credits', () => {
+  const input = fixture();
+  input.rules.totalCredits = Number.POSITIVE_INFINITY;
+  expect(validateCurriculum(input).issues).toContain('INVALID_TOTAL_CREDITS');
+ });
+ it('rejects non-finite required course credits', () => {
+  const input = fixture();
+  input.rules.requiredCourses[0].credits = Number.NaN;
+  expect(validateCurriculum(input).issues).toContain('INVALID_COURSE_CREDITS');
+ });
  it('rejects non-finite elective credit requirements', () => {
   const input = fixture();
   input.rules.electivePools[0].creditsRequired = Number.NaN;
