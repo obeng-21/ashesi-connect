@@ -358,4 +358,12 @@ describe('controlled curriculum import',()=>{
   expect(result.draft?.status).toBe('DRAFT');
   expect(result.draft?.rules.verifiedByRegistry).toBe(false);
  });
+ it.each(['2026-11-06T00:00:00.123Z','2026-11-06T00:00:00+00:00'])('accepts fractional or explicit UTC provenance timestamp %s as a draft only',retrievedAt=>{
+  const result=planCurriculumDraftImport({...sample,sources:[{...sample.sources[0],retrievedAt}]});
+  expect(result.accepted).toBe(true);
+  expect(result.issues).toEqual([]);
+  expect(result.draft?.status).toBe('DRAFT');
+  expect(result.draft?.rules.verifiedByRegistry).toBe(false);
+ });
+
 });
