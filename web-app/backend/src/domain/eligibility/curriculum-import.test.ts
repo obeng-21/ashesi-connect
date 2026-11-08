@@ -413,4 +413,15 @@ describe('controlled curriculum import',()=>{
  });
 
 
+ it('rejects a multi-source import when a later provenance kind is unsupported',()=>{
+  const sources=[
+   {...sample.sources[0],contentHash:'trusted-source'},
+   {...sample.sources[0],sourceKind:'UNVERIFIED_UPLOAD',contentHash:'unsupported-kind'}
+  ];
+  const result=planCurriculumDraftImport({...sample,sources});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+  expect(result.issues.length).toBeGreaterThan(0);
+ });
+
 });
