@@ -324,4 +324,16 @@ describe('controlled curriculum import',()=>{
   expect(result.issues.length).toBeGreaterThan(0);
  });
 
+ it.each([
+  ['invalid retrieval timestamp', {retrievedAt:'not-a-timestamp'}],
+  ['timestamp without timezone', {retrievedAt:'2026-11-06T00:00:00'}],
+  ['unsupported provenance kind', {sourceKind:'UNVERIFIED_UPLOAD'}],
+  ['insecure provenance URL', {sourceUrl:'http://ashesi.edu.gh/'}]
+ ])('rejects untrustworthy source provenance: %s',(_label,sourceOverride)=>{
+  const result=planCurriculumDraftImport({...sample,sources:[{...sample.sources[0],...sourceOverride}]});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+  expect(result.issues.length).toBeGreaterThan(0);
+ });
+
 });
