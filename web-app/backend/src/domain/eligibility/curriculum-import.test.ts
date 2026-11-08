@@ -446,4 +446,15 @@ describe('controlled curriculum import',()=>{
   expect(result.issues.length).toBeGreaterThan(0);
  });
 
+ it('rejects a multi-source import when a later source lacks a content fingerprint',()=>{
+  const sources=[
+   {...sample.sources[0],contentHash:'trusted-source'},
+   {...sample.sources[0],contentHash:'   '}
+  ];
+  const result=planCurriculumDraftImport({...sample,sources});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+  expect(result.issues.length).toBeGreaterThan(0);
+ });
+
 });
