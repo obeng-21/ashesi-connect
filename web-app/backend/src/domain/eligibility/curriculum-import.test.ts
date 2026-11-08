@@ -298,4 +298,18 @@ describe('controlled curriculum import',()=>{
   expect(valid.draft?.status).toBe('DRAFT');
   expect(valid.draft?.rules.verifiedByRegistry).toBe(false);
  });
+ it.each([
+  ['missing rules', {rules:undefined}],
+  ['null rules', {rules:null}],
+  ['non-array required courses', {rules:{...sample.rules,requiredCourses:{0:sample.rules.requiredCourses[0]}}}],
+  ['null elective pools', {rules:{...sample.rules,electivePools:null}}],
+  ['non-array provenance', {sources:{0:sample.sources[0]}}],
+  ['null elective course options', {rules:{...sample.rules,electivePools:[{...sample.rules.electivePools[0],courseCodes:null}]}}]
+ ])('rejects malformed nested curriculum structures: %s',(_label,overrides)=>{
+  const result=planCurriculumDraftImport({...sample,...overrides});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+  expect(result.issues.length).toBeGreaterThan(0);
+ });
+
 });
