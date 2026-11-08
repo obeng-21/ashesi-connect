@@ -435,4 +435,15 @@ describe('controlled curriculum import',()=>{
   expect(result.issues.length).toBeGreaterThan(0);
  });
 
+ it('rejects an entire multi-source import when a later source has an out-of-range effective year',()=>{
+  const sources=[
+   {...sample.sources[0],contentHash:'trusted-source'},
+   {...sample.sources[0],effectiveYear:2201,contentHash:'invalid-year-source'}
+  ];
+  const result=planCurriculumDraftImport({...sample,sources});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+  expect(result.issues.length).toBeGreaterThan(0);
+ });
+
 });
