@@ -28,3 +28,21 @@ describe('curriculum elective allocation safeguards',()=>{
   expect(validateCurriculum(input).issues).toContain('INVALID_AFRICAN_STUDIES_MINIMUM');
  });
 });
+
+describe('curriculum credit feasibility safeguards', () => {
+ it('rejects required and elective minimum credits exceeding the published total', () => {
+  const input = fixture();
+  input.rules.totalCredits = 1;
+  expect(validateCurriculum(input).issues).toContain('CREDIT_REQUIREMENTS_EXCEED_TOTAL');
+ });
+ it('accepts required and elective minimum credits equal to the published total', () => {
+  const input = fixture();
+  input.rules.totalCredits = 2;
+  expect(validateCurriculum(input).valid).toBe(true);
+ });
+ it('rejects non-finite elective credit requirements', () => {
+  const input = fixture();
+  input.rules.electivePools[0].creditsRequired = Number.NaN;
+  expect(validateCurriculum(input).issues).toContain('INVALID_ELECTIVE_CREDITS');
+ });
+});
