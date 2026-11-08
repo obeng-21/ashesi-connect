@@ -390,5 +390,16 @@ describe('controlled curriculum import',()=>{
   expect(result.draft).toBeNull();
   expect(result.issues.length).toBeGreaterThan(0);
  });
+ it('rejects a multi-source import when a later provenance URL embeds credentials',()=>{
+  const sources=[
+   {...sample.sources[0],contentHash:'trusted-source'},
+   {...sample.sources[0],sourceUrl:'https://user:secret@ashesi.edu.gh/curriculum',contentHash:'credential-bearing-source'}
+  ];
+  const result=planCurriculumDraftImport({...sample,sources});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+  expect(result.issues.length).toBeGreaterThan(0);
+ });
+
 
 });
