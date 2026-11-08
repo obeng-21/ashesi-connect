@@ -270,4 +270,21 @@ describe('controlled curriculum import',()=>{
   expect(input.rules.electivePools[0].courseCodes[0]).toBe('CHANGED_INPUT');
  });
 
+ it('keeps separately planned provisional drafts independent',()=>{
+  const first=planCurriculumDraftImport(structuredClone(sample));
+  const second=planCurriculumDraftImport(structuredClone(sample));
+  expect(first.accepted).toBe(true);
+  expect(second.accepted).toBe(true);
+  expect(first.draft).not.toBeNull();
+  expect(second.draft).not.toBeNull();
+  if (!first.draft || !second.draft) return;
+  first.draft.rules.requiredCourses[0].courseCode='FIRST_ONLY';
+  first.draft.rules.electivePools[0].courseCodes[0]='FIRST_ELECTIVE_ONLY';
+  first.draft.sources[0].contentHash='first-only';
+  expect(second.draft.rules.requiredCourses[0].courseCode).toBe('CS101');
+  expect(second.draft.rules.electivePools[0].courseCodes[0]).toBe('EL101');
+  expect(second.draft.sources[0].contentHash).toBe(sample.sources[0].contentHash);
+  expect(second.draft.status).toBe('DRAFT');
+  expect(second.draft.rules.verifiedByRegistry).toBe(false);
+ });
 });
