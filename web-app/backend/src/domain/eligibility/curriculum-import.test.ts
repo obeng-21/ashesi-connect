@@ -328,7 +328,9 @@ describe('controlled curriculum import',()=>{
   ['invalid retrieval timestamp', {retrievedAt:'not-a-timestamp'}],
   ['timestamp without timezone', {retrievedAt:'2026-11-06T00:00:00'}],
   ['unsupported provenance kind', {sourceKind:'UNVERIFIED_UPLOAD'}],
-  ['insecure provenance URL', {sourceUrl:'http://ashesi.edu.gh/'}]
+  ['insecure provenance URL', {sourceUrl:'http://ashesi.edu.gh/'}],
+  ['credential-bearing provenance URL', {sourceUrl:'https://user:password@ashesi.edu.gh/curriculum'}],
+  ['malformed provenance URL', {sourceUrl:'https://'}]
  ])('rejects untrustworthy source provenance: %s',(_label,sourceOverride)=>{
   const result=planCurriculumDraftImport({...sample,sources:[{...sample.sources[0],...sourceOverride}]});
   expect(result.accepted).toBe(false);
