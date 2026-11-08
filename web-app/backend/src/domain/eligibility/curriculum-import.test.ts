@@ -350,4 +350,12 @@ describe('controlled curriculum import',()=>{
   expect(result.draft?.rules.verifiedByRegistry).toBe(false);
   expect(result.draft?.sourceWorkbookHash).toBe('A'.repeat(64));
  });
+
+ it.each(['2026-11-06T00:00:00Z','2026-11-06T00:00:00-05:00'])('accepts timezone-qualified provenance timestamp %s without granting registry authority',retrievedAt=>{
+  const result=planCurriculumDraftImport({...sample,sources:[{...sample.sources[0],retrievedAt}]});
+  expect(result.accepted).toBe(true);
+  expect(result.issues).toEqual([]);
+  expect(result.draft?.status).toBe('DRAFT');
+  expect(result.draft?.rules.verifiedByRegistry).toBe(false);
+ });
 });
