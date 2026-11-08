@@ -287,4 +287,15 @@ describe('controlled curriculum import',()=>{
   expect(second.draft.status).toBe('DRAFT');
   expect(second.draft.rules.verifiedByRegistry).toBe(false);
  });
+ it('does not leak validation failures into subsequent independent import previews',()=>{
+  const invalid=planCurriculumDraftImport({...sample,status:'VERIFIED'});
+  expect(invalid.accepted).toBe(false);
+  expect(invalid.draft).toBeNull();
+  const valid=planCurriculumDraftImport(structuredClone(sample));
+  expect(valid.accepted).toBe(true);
+  expect(valid.issues).toEqual([]);
+  expect(valid.draft?.validationIssues).toEqual([]);
+  expect(valid.draft?.status).toBe('DRAFT');
+  expect(valid.draft?.rules.verifiedByRegistry).toBe(false);
+ });
 });
