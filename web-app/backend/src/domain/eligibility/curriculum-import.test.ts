@@ -366,4 +366,17 @@ describe('controlled curriculum import',()=>{
   expect(result.draft?.rules.verifiedByRegistry).toBe(false);
  });
 
+ it('preserves multiple independent provenance records in an unverified preview',()=>{
+  const sources=[
+   {...sample.sources[0],contentHash:'first-source'},
+   {...sample.sources[0],sourceKind:'REGISTRY_PROVIDED_WORKBOOK',sourceUrl:'https://ashesi.edu.gh/registry/curriculum',contentHash:'second-source'}
+  ];
+  const result=planCurriculumDraftImport({...sample,sources});
+  expect(result.accepted).toBe(true);
+  expect(result.issues).toEqual([]);
+  expect(result.draft?.sources).toEqual(sources);
+  expect(result.draft?.status).toBe('DRAFT');
+  expect(result.draft?.rules.verifiedByRegistry).toBe(false);
+ });
+
 });
