@@ -21,7 +21,7 @@ const source = z.object({
   try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password; } catch { return false; }
  }, 'Source URL must be HTTPS without embedded credentials'),
  sourceKind: z.enum(['OFFICIAL_WEBSITE','REGISTRY_PROVIDED_WORKBOOK']),
- retrievedAt: z.string().datetime(),
+ retrievedAt: z.string().datetime({ offset: true }),
  effectiveYear: z.number().int().min(2000).max(2200),
  contentHash: z.string().trim().min(1).max(256)
 }).strict();
