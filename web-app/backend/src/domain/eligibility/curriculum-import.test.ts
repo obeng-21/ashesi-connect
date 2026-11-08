@@ -257,4 +257,17 @@ describe('controlled curriculum import',()=>{
   expect(result.draft?.rules.verifiedByRegistry).toBe(false);
  });
 
+ it('isolates nested elective options in accepted provisional drafts',()=>{
+  const input=structuredClone(sample);
+  const result=planCurriculumDraftImport(input);
+  expect(result.accepted).toBe(true);
+  expect(result.draft?.status).toBe('DRAFT');
+  expect(result.draft?.rules.verifiedByRegistry).toBe(false);
+  if (!result.draft) return;
+  input.rules.electivePools[0].courseCodes[0]='CHANGED_INPUT';
+  expect(result.draft.rules.electivePools[0].courseCodes[0]).toBe('EL101');
+  result.draft.rules.electivePools[0].courseCodes[0]='CHANGED_DRAFT';
+  expect(input.rules.electivePools[0].courseCodes[0]).toBe('CHANGED_INPUT');
+ });
+
 });
