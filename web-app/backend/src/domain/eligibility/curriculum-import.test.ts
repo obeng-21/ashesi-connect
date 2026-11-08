@@ -312,4 +312,16 @@ describe('controlled curriculum import',()=>{
   expect(result.issues.length).toBeGreaterThan(0);
  });
 
+ it.each([
+  ['top-level authority flag', {certified:true}],
+  ['registry verification override', {rules:{...sample.rules,verifiedByRegistry:true}}],
+  ['unexpected nested course metadata', {rules:{...sample.rules,requiredCourses:[{...sample.rules.requiredCourses[0],approvedByRegistry:true}]}}],
+  ['unexpected provenance metadata', {sources:[{...sample.sources[0],officiallyCertified:true}]}]
+ ])('rejects unrecognized or elevated certification claims: %s',(_label,overrides)=>{
+  const result=planCurriculumDraftImport({...sample,...overrides});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+  expect(result.issues.length).toBeGreaterThan(0);
+ });
+
 });
