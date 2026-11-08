@@ -379,4 +379,16 @@ describe('controlled curriculum import',()=>{
   expect(result.draft?.rules.verifiedByRegistry).toBe(false);
  });
 
+
+ it('rejects a multi-source import when any provenance record is untrusted',()=>{
+  const sources=[
+   {...sample.sources[0],contentHash:'trusted-source'},
+   {...sample.sources[0],sourceUrl:'http://untrusted.example/curriculum',contentHash:'untrusted-source'}
+  ];
+  const result=planCurriculumDraftImport({...sample,sources});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+  expect(result.issues.length).toBeGreaterThan(0);
+ });
+
 });
