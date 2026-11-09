@@ -351,3 +351,17 @@ describe('minimum-grade validation at curriculum import boundary', () => {
   expect(validateCurriculum(input).valid).toBe(true);
  });
 });
+
+
+describe('minimum-grade import normalization safeguards', () => {
+ it('rejects whitespace-padded required minimum grades rather than silently changing policy', () => {
+  const input = fixture();
+  input.rules.requiredCourses[0].minimumGrade = ' D+ ' as any;
+  expect(validateCurriculum(input).issues).toContain('INVALID_REQUIRED_MINIMUM_GRADE');
+ });
+ it('rejects case-mismatched elective minimum grades rather than silently changing policy', () => {
+  const input = fixture();
+  input.rules.electivePools[0].minimumGrade = 'd+' as any;
+  expect(validateCurriculum(input).issues).toContain('INVALID_ELECTIVE_MINIMUM_GRADE');
+ });
+});
