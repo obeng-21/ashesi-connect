@@ -109,3 +109,19 @@ describe('curriculum identity and provenance safeguards', () => {
   expect(validateCurriculum(input).issues).toContain('NO_POLICY_PROVENANCE');
  });
 });
+
+describe('curriculum provenance URL safeguards', () => {
+ it('rejects malformed HTTPS URLs that merely have the expected prefix', () => {
+  const input = fixture();
+  input.sources[0].sourceUrl = 'https://';
+  expect(validateCurriculum(input).issues).toContain('INVALID_SOURCE_METADATA');
+ });
+ it('rejects embedded credentials in provenance URLs', () => {
+  const input = fixture();
+  input.sources[0].sourceUrl = 'https://user:password@example.edu/catalogue';
+  expect(validateCurriculum(input).issues).toContain('INVALID_SOURCE_METADATA');
+ });
+ it('accepts a well-formed HTTPS provenance URL', () => {
+  expect(validateCurriculum(fixture()).valid).toBe(true);
+ });
+});
