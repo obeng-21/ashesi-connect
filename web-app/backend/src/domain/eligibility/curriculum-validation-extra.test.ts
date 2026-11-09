@@ -86,3 +86,26 @@ describe('curriculum credit feasibility safeguards', () => {
   expect(validateCurriculum(input).issues).toContain('REQUIRED_COURSE_IN_ELECTIVE_POOL');
  });
 });
+
+describe('curriculum identity and provenance safeguards', () => {
+ it('rejects duplicate required course codes', () => {
+  const input = fixture();
+  input.rules.requiredCourses.push({courseCode:'CS101',credits:1,minimumGrade:'D+',category:'Major'});
+  expect(validateCurriculum(input).issues).toContain('DUPLICATE_OR_EMPTY_REQUIRED_COURSE');
+ });
+ it('rejects duplicate elective pool categories', () => {
+  const input = fixture();
+  input.rules.electivePools.push({category:'General',creditsRequired:0,courseCodes:['E103']});
+  expect(validateCurriculum(input).issues).toContain('DUPLICATE_OR_EMPTY_ELECTIVE_POOL');
+ });
+ it('rejects curricula without required courses', () => {
+  const input = fixture();
+  input.rules.requiredCourses = [];
+  expect(validateCurriculum(input).issues).toContain('NO_REQUIRED_COURSES');
+ });
+ it('rejects curricula without policy provenance', () => {
+  const input = fixture();
+  input.sources = [];
+  expect(validateCurriculum(input).issues).toContain('NO_POLICY_PROVENANCE');
+ });
+});
