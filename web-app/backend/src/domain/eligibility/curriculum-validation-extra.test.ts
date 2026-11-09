@@ -203,3 +203,17 @@ describe('curriculum lifecycle status safeguards', () => {
   expect(validateCurriculum(input).valid).toBe(true);
  });
 });
+
+
+describe('curriculum blank identifier regression safeguards', () => {
+ it('rejects whitespace-only required course codes', () => {
+  const input = fixture();
+  input.rules.requiredCourses[0].courseCode = '   ';
+  expect(validateCurriculum(input).issues).toContain('DUPLICATE_OR_EMPTY_REQUIRED_COURSE');
+ });
+ it('rejects whitespace-only elective pool categories', () => {
+  const input = fixture();
+  input.rules.electivePools[0].category = '   ';
+  expect(validateCurriculum(input).issues).toContain('DUPLICATE_OR_EMPTY_ELECTIVE_POOL');
+ });
+});
