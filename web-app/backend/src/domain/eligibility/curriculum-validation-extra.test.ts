@@ -121,6 +121,17 @@ describe('curriculum provenance URL safeguards', () => {
   input.sources[0].sourceUrl = 'https://user:password@example.edu/catalogue';
   expect(validateCurriculum(input).issues).toContain('INVALID_SOURCE_METADATA');
  });
+
+ it('rejects invalid provenance retrieval timestamps', () => {
+  const input = fixture();
+  input.sources[0].retrievedAt = 'not-a-date';
+  expect(validateCurriculum(input).issues).toContain('INVALID_SOURCE_METADATA');
+ });
+ it('rejects fractional provenance effective years', () => {
+  const input = fixture();
+  input.sources[0].effectiveYear = 2028.5;
+  expect(validateCurriculum(input).issues).toContain('INVALID_SOURCE_METADATA');
+ });
  it('accepts a well-formed HTTPS provenance URL', () => {
   expect(validateCurriculum(fixture()).valid).toBe(true);
  });
