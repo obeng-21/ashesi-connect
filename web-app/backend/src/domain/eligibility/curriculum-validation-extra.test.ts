@@ -365,3 +365,25 @@ describe('minimum-grade import normalization safeguards', () => {
   expect(validateCurriculum(input).issues).toContain('INVALID_ELECTIVE_MINIMUM_GRADE');
  });
 });
+
+
+describe('reviewed curriculum minimum-grade fail-closed safeguards', () => {
+ it('rejects a REVIEWED curriculum with an unsupported required-course minimum grade', () => {
+  const input = fixture();
+  input.status = 'REVIEWED';
+  input.rules.requiredCourses[0].minimumGrade = 'PASS' as any;
+  const result = validateCurriculum(input);
+  expect(result.valid).toBe(false);
+  expect(result.issues).toContain('INVALID_REQUIRED_MINIMUM_GRADE');
+  expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+ });
+ it('rejects a REVIEWED curriculum with an unsupported elective minimum grade', () => {
+  const input = fixture();
+  input.status = 'REVIEWED';
+  input.rules.electivePools[0].minimumGrade = 'd+' as any;
+  const result = validateCurriculum(input);
+  expect(result.valid).toBe(false);
+  expect(result.issues).toContain('INVALID_ELECTIVE_MINIMUM_GRADE');
+  expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+ });
+});
