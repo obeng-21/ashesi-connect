@@ -279,3 +279,20 @@ describe('elective duplicate classification', () => {
   expect(validateCurriculum(input).issues).toContain('ELECTIVE_COURSE_IN_MULTIPLE_POOLS');
  });
 });
+
+
+describe('curriculum provenance effective-year bounds', () => {
+ it('rejects a zero effective year', () => {
+  const input = fixture();
+  input.sources[0].effectiveYear = 0;
+  expect(validateCurriculum(input).issues).toContain('INVALID_SOURCE_METADATA');
+ });
+ it('rejects a negative effective year', () => {
+  const input = fixture();
+  input.sources[0].effectiveYear = -2028;
+  expect(validateCurriculum(input).issues).toContain('INVALID_SOURCE_METADATA');
+ });
+ it('accepts a positive integer effective year', () => {
+  expect(validateCurriculum(fixture()).valid).toBe(true);
+ });
+});
