@@ -151,6 +151,19 @@ describe('curriculum provenance URL safeguards', () => {
  });
 });
 
+describe('curriculum source classification safeguards', () => {
+ it('rejects unrecognized provenance source kinds at runtime', () => {
+  const input = fixture();
+  input.sources[0].sourceKind = 'UNVERIFIED_UPLOAD' as CurriculumVersion['sources'][number]['sourceKind'];
+  expect(validateCurriculum(input).issues).toContain('INVALID_SOURCE_METADATA');
+ });
+ it('accepts a registry-provided workbook provenance classification', () => {
+  const input = fixture();
+  input.sources[0].sourceKind = 'REGISTRY_PROVIDED_WORKBOOK';
+  expect(validateCurriculum(input).valid).toBe(true);
+ });
+});
+
 describe('curriculum draft identity and review safeguards', () => {
  it('rejects blank curriculum version identifiers', () => {
   const input = fixture();
