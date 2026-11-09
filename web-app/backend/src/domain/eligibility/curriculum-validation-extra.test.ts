@@ -235,3 +235,31 @@ describe('curriculum provenance edge-case safeguards', () => {
   expect(validateCurriculum(input).issues).toContain('INVALID_SOURCE_METADATA');
  });
 });
+
+describe('curriculum identifier whitespace collision safeguards', () => {
+ it('rejects required course codes differing only by surrounding whitespace', () => {
+  const input = fixture();
+  input.rules.requiredCourses.push({courseCode:' CS101 ',credits:1,minimumGrade:'D+',category:'Major'});
+  expect(validateCurriculum(input).issues).toContain('DUPLICATE_OR_EMPTY_REQUIRED_COURSE');
+ });
+ it('rejects elective pool categories differing only by surrounding whitespace', () => {
+  const input = fixture();
+  input.rules.electivePools.push({category:' General ',creditsRequired:0,courseCodes:['E103']});
+  expect(validateCurriculum(input).issues).toContain('DUPLICATE_OR_EMPTY_ELECTIVE_POOL');
+ });
+ it('rejects required course reused as an elective with surrounding whitespace', () => {
+  const input = fixture();
+  input.rules.electivePools[0].courseCodes.push(' CS101 ');
+  expect(validateCurriculum(input).issues).toContain('REQUIRED_COURSE_IN_ELECTIVE_POOL');
+ });
+ it('rejects elective codes differing only by surrounding whitespace within one pool', () => {
+  const input = fixture();
+  input.rules.electivePools[0].courseCodes = ['E101', ' E101 '];
+  expect(validateCurriculum(input).issues).toContain('DUPLICATE_ELECTIVE_COURSE');
+ });
+ it('rejects elective codes differing only by whitespace across pools', () => {
+  const input = fixture();
+  input.rules.electivePools.push({category:'Other',creditsRequired:0,courseCodes:[' E101 ']});
+  expect(validateCurriculum(input).issues).toContain('ELECTIVE_COURSE_IN_MULTIPLE_POOLS');
+ });
+});
