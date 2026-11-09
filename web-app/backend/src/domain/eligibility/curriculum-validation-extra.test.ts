@@ -55,6 +55,21 @@ describe('curriculum credit feasibility safeguards', () => {
   input.rules.electivePools[0].creditsRequired = Number.NaN;
   expect(validateCurriculum(input).issues).toContain('INVALID_ELECTIVE_CREDITS');
  });
+ it('rejects zero required course credits', () => {
+  const input = fixture();
+  input.rules.requiredCourses[0].credits = 0;
+  expect(validateCurriculum(input).issues).toContain('INVALID_COURSE_CREDITS');
+ });
+ it('rejects zero published total credits', () => {
+  const input = fixture();
+  input.rules.totalCredits = 0;
+  expect(validateCurriculum(input).issues).toContain('INVALID_TOTAL_CREDITS');
+ });
+ it('rejects positive elective requirements without any eligible course options', () => {
+  const input = fixture();
+  input.rules.electivePools[0].courseCodes = [];
+  expect(validateCurriculum(input).issues).toContain('EMPTY_ELECTIVE_OPTIONS');
+ });
  it('rejects negative required course credits', () => {
   const input = fixture();
   input.rules.requiredCourses[0].credits = -1;
