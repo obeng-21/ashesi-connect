@@ -190,3 +190,16 @@ describe('curriculum draft identity and review safeguards', () => {
   expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
  });
 });
+
+describe('curriculum lifecycle status safeguards', () => {
+ it('rejects unknown statuses at runtime', () => {
+  const input = fixture();
+  input.status = 'CERTIFIED' as CurriculumVersion['status'];
+  expect(validateCurriculum(input).issues).toContain('INVALID_CURRICULUM_STATUS');
+ });
+ it('accepts the supported superseded lifecycle status without granting certification', () => {
+  const input = fixture();
+  input.status = 'SUPERSEDED';
+  expect(validateCurriculum(input).valid).toBe(true);
+ });
+});
