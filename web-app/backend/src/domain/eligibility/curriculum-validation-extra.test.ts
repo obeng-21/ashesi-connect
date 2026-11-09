@@ -146,3 +146,30 @@ describe('curriculum provenance URL safeguards', () => {
   expect(validateCurriculum(fixture()).valid).toBe(true);
  });
 });
+
+describe('curriculum draft identity and review safeguards', () => {
+ it('rejects blank curriculum version identifiers', () => {
+  const input = fixture();
+  input.version = '   ';
+  expect(validateCurriculum(input).issues).toContain('MISSING_VERSION');
+ });
+ it('rejects missing programme identifiers', () => {
+  const input = fixture();
+  input.rules.programme = '   ';
+  expect(validateCurriculum(input).issues).toContain('MISSING_PROGRAMME_OR_TRACK');
+ });
+ it('rejects missing track identifiers', () => {
+  const input = fixture();
+  input.rules.track = '   ';
+  expect(validateCurriculum(input).issues).toContain('MISSING_PROGRAMME_OR_TRACK');
+ });
+ it('flags invalid reviewed curricula without granting certification', () => {
+  const input = fixture();
+  input.status = 'REVIEWED';
+  input.sources = [];
+  const result = validateCurriculum(input);
+  expect(result.valid).toBe(false);
+  expect(result.issues).toContain('NO_POLICY_PROVENANCE');
+  expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+ });
+});
