@@ -19,6 +19,7 @@ export type CurriculumValidation = { valid: boolean; issues: string[] };
 export function validateCurriculum(input: CurriculumVersion): CurriculumValidation {
   const issues: string[] = [];
   const { rules } = input;
+  if (!['DRAFT', 'REVIEWED', 'SUPERSEDED'].includes(input.status)) issues.push('INVALID_CURRICULUM_STATUS');
   if (!input.version.trim()) issues.push('MISSING_VERSION');
   if (!rules.programme.trim() || !rules.track.trim()) issues.push('MISSING_PROGRAMME_OR_TRACK');
   if (!Number.isFinite(rules.totalCredits) || rules.totalCredits <= 0) issues.push('INVALID_TOTAL_CREDITS');
