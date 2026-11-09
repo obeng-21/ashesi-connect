@@ -387,3 +387,24 @@ describe('reviewed curriculum minimum-grade fail-closed safeguards', () => {
   expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
  });
 });
+
+describe('reviewed curriculum credit-feasibility fail-closed safeguards', () => {
+ it('rejects a REVIEWED curriculum whose required and elective credits exceed the total', () => {
+  const input = fixture();
+  input.status = 'REVIEWED';
+  input.rules.totalCredits = 1;
+  const result = validateCurriculum(input);
+  expect(result.valid).toBe(false);
+  expect(result.issues).toContain('CREDIT_REQUIREMENTS_EXCEED_TOTAL');
+  expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+ });
+ it('rejects a REVIEWED curriculum with non-finite elective credits', () => {
+  const input = fixture();
+  input.status = 'REVIEWED';
+  input.rules.electivePools[0].creditsRequired = Number.POSITIVE_INFINITY;
+  const result = validateCurriculum(input);
+  expect(result.valid).toBe(false);
+  expect(result.issues).toContain('INVALID_ELECTIVE_CREDITS');
+  expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+ });
+});
