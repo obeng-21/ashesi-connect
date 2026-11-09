@@ -24,17 +24,20 @@ export function validateCurriculum(input: CurriculumVersion): CurriculumValidati
   if (!rules.programme.trim() || !rules.track.trim()) issues.push('MISSING_PROGRAMME_OR_TRACK');
   if (!Number.isFinite(rules.totalCredits) || rules.totalCredits <= 0) issues.push('INVALID_TOTAL_CREDITS');
   if (!rules.requiredCourses.length) issues.push('NO_REQUIRED_COURSES');
+  const allowedGrades = new Set(['A+','A','B+','B','C+','C','D+','D','E']);
   const required = new Set<string>();
   for (const course of rules.requiredCourses) {
     if (!course.courseCode.trim() || required.has(course.courseCode.trim())) issues.push('DUPLICATE_OR_EMPTY_REQUIRED_COURSE');
     required.add(course.courseCode.trim());
     if (!Number.isFinite(course.credits) || course.credits <= 0) issues.push('INVALID_COURSE_CREDITS');
+    if (course.minimumGrade !== undefined && !allowedGrades.has(course.minimumGrade)) issues.push('INVALID_REQUIRED_MINIMUM_GRADE');
   }
   const poolCategories = new Set<string>();
   for (const pool of rules.electivePools) {
     if (!pool.category.trim() || poolCategories.has(pool.category.trim())) issues.push('DUPLICATE_OR_EMPTY_ELECTIVE_POOL');
     poolCategories.add(pool.category.trim());
     if (!Number.isFinite(pool.creditsRequired) || pool.creditsRequired < 0) issues.push('INVALID_ELECTIVE_CREDITS');
+    if (pool.minimumGrade !== undefined && !allowedGrades.has(pool.minimumGrade)) issues.push('INVALID_ELECTIVE_MINIMUM_GRADE');
     if (pool.creditsRequired > 0 && !pool.courseCodes.length) issues.push('EMPTY_ELECTIVE_OPTIONS');
     if (pool.courseCodes.some(code => required.has(code.trim()))) issues.push('REQUIRED_COURSE_IN_ELECTIVE_POOL');
     if (pool.courseCodes.some(code => !code.trim())) issues.push('EMPTY_ELECTIVE_COURSE_CODE');
