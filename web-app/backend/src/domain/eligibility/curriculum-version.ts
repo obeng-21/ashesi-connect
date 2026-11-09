@@ -41,8 +41,15 @@ export function validateCurriculum(input: CurriculumVersion): CurriculumValidati
     if (new Set(pool.courseCodes.map(code => code.trim())).size !== pool.courseCodes.length) issues.push('DUPLICATE_ELECTIVE_COURSE');
     if (pool.africanStudiesMinimum !== undefined && (!Number.isInteger(pool.africanStudiesMinimum) || pool.africanStudiesMinimum < 0 || pool.africanStudiesMinimum > pool.courseCodes.length)) issues.push('INVALID_AFRICAN_STUDIES_MINIMUM');
   }
-  const allElectiveCodes = rules.electivePools.flatMap(pool => pool.courseCodes);
-  if (new Set(allElectiveCodes.map(code => code.trim())).size !== allElectiveCodes.length) issues.push('ELECTIVE_COURSE_IN_MULTIPLE_POOLS');
+  const electiveOwners = new Map<string, number>();
+  rules.electivePools.forEach((pool, index) => {
+    for (const code of pool.courseCodes) {
+      const normalized = code.trim();
+      const previousPool = electiveOwners.get(normalized);
+      if (previousPool !== undefined && previousPool !== index) issues.push('ELECTIVE_COURSE_IN_MULTIPLE_POOLS');
+      if (previousPool === undefined) electiveOwners.set(normalized, index);
+    }
+  });
   const requiredCredits = rules.requiredCourses.reduce((sum, c) => sum + c.credits, 0);
   const poolCredits = rules.electivePools.reduce((sum, p) => sum + p.creditsRequired, 0);
   if (requiredCredits + poolCredits > rules.totalCredits + 0.0001) issues.push('CREDIT_REQUIREMENTS_EXCEED_TOTAL');
