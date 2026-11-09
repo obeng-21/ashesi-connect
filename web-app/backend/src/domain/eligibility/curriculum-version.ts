@@ -46,8 +46,17 @@ export function validateCurriculum(input: CurriculumVersion): CurriculumValidati
   if (requiredCredits + poolCredits > rules.totalCredits + 0.0001) issues.push('CREDIT_REQUIREMENTS_EXCEED_TOTAL');
   if (input.sources.length === 0) issues.push('NO_POLICY_PROVENANCE');
   for (const source of input.sources) {
-    if (!source.sourceUrl.startsWith('https://') || !source.contentHash.trim() || !Number.isFinite(Date.parse(source.retrievedAt)) || !Number.isInteger(source.effectiveYear)) issues.push('INVALID_SOURCE_METADATA');
+    if (!isValidHttpsUrl(source.sourceUrl) || !source.contentHash.trim() || !Number.isFinite(Date.parse(source.retrievedAt)) || !Number.isInteger(source.effectiveYear)) issues.push('INVALID_SOURCE_METADATA');
   }
   if (input.status === 'REVIEWED' && issues.length > 0) issues.push('REVIEWED_CURRICULUM_INVALID');
   return { valid: issues.length === 0, issues: [...new Set(issues)] };
+}
+
+function isValidHttpsUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && Boolean(url.hostname) && !url.username && !url.password;
+  } catch {
+    return false;
+  }
 }
