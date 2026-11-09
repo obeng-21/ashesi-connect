@@ -331,3 +331,23 @@ describe('reviewed and superseded provenance fail-closed safeguards', () => {
   expect(result.issues).toContain('INVALID_SOURCE_METADATA');
  });
 });
+
+
+describe('minimum-grade validation at curriculum import boundary', () => {
+ it('rejects unsupported required-course minimum grades', () => {
+  const input = fixture();
+  input.rules.requiredCourses[0].minimumGrade = 'PASS' as any;
+  expect(validateCurriculum(input).issues).toContain('INVALID_REQUIRED_MINIMUM_GRADE');
+ });
+ it('rejects unsupported elective-pool minimum grades', () => {
+  const input = fixture();
+  input.rules.electivePools[0].minimumGrade = 'PASS' as any;
+  expect(validateCurriculum(input).issues).toContain('INVALID_ELECTIVE_MINIMUM_GRADE');
+ });
+ it('accepts the supported D+ minimum grade', () => {
+  const input = fixture();
+  input.rules.requiredCourses[0].minimumGrade = 'D+';
+  input.rules.electivePools[0].minimumGrade = 'D+';
+  expect(validateCurriculum(input).valid).toBe(true);
+ });
+});
