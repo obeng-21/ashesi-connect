@@ -247,3 +247,28 @@ describe('provisional academic progress preview',()=>{
   expect(result.officialCertification).toBe(false);
  });
 });
+
+describe('provisional-only output contract', () => {
+ const completed = [{courseCode:'CS101',attempts:[{credits:1,grade:'A' as const,status:'COMPLETED' as const}]}];
+ it('never certifies a complete transcript even with registry-verified rules', () => {
+  const result = previewAcademicProgress(completed, rules);
+  expect(result.status).toBe('ACADEMIC_REQUIREMENTS_MET');
+  expect(result.provisionalOnly).toBe(true);
+  expect(result.officialCertification).toBe(false);
+  expect(result.audit?.eligibilityDetermined).toBe(false);
+ });
+ it('never certifies when the curriculum is unavailable', () => {
+  const result = previewAcademicProgress(completed, null);
+  expect(result.status).toBe('INSUFFICIENT_DATA');
+  expect(result.provisionalOnly).toBe(true);
+  expect(result.officialCertification).toBe(false);
+  expect(result.audit).toBeNull();
+ });
+ it('never certifies when required coursework remains outstanding', () => {
+  const result = previewAcademicProgress([{courseCode:'CS101',attempts:[{credits:1,grade:'D',status:'COMPLETED'}]}], rules);
+  expect(result.status).toBe('REQUIREMENTS_OUTSTANDING');
+  expect(result.provisionalOnly).toBe(true);
+  expect(result.officialCertification).toBe(false);
+  expect(result.audit?.eligibilityDetermined).toBe(false);
+ });
+});
