@@ -55,4 +55,19 @@ describe('curriculum credit feasibility safeguards', () => {
   input.rules.electivePools[0].creditsRequired = Number.NaN;
   expect(validateCurriculum(input).issues).toContain('INVALID_ELECTIVE_CREDITS');
  });
+ it('rejects negative required course credits', () => {
+  const input = fixture();
+  input.rules.requiredCourses[0].credits = -1;
+  expect(validateCurriculum(input).issues).toContain('INVALID_COURSE_CREDITS');
+ });
+ it('rejects negative elective credit requirements', () => {
+  const input = fixture();
+  input.rules.electivePools[0].creditsRequired = -1;
+  expect(validateCurriculum(input).issues).toContain('INVALID_ELECTIVE_CREDITS');
+ });
+ it('rejects required courses reused as elective options', () => {
+  const input = fixture();
+  input.rules.electivePools[0].courseCodes.push('CS101');
+  expect(validateCurriculum(input).issues).toContain('REQUIRED_COURSE_IN_ELECTIVE_POOL');
+ });
 });
