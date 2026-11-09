@@ -263,3 +263,19 @@ describe('curriculum identifier whitespace collision safeguards', () => {
   expect(validateCurriculum(input).issues).toContain('ELECTIVE_COURSE_IN_MULTIPLE_POOLS');
  });
 });
+
+describe('elective duplicate classification', () => {
+ it('reports intra-pool duplicates without falsely reporting cross-pool overlap', () => {
+  const input = fixture();
+  input.rules.electivePools[0].courseCodes = ['E101', ' E101 '];
+  const issues = validateCurriculum(input).issues;
+  expect(issues).toContain('DUPLICATE_ELECTIVE_COURSE');
+  expect(issues).not.toContain('ELECTIVE_COURSE_IN_MULTIPLE_POOLS');
+ });
+ it('reports cross-pool overlap even when a code repeats within its original pool', () => {
+  const input = fixture();
+  input.rules.electivePools[0].courseCodes = ['E101', ' E101 '];
+  input.rules.electivePools.push({category:'Other',creditsRequired:0,courseCodes:['E101']});
+  expect(validateCurriculum(input).issues).toContain('ELECTIVE_COURSE_IN_MULTIPLE_POOLS');
+ });
+});
