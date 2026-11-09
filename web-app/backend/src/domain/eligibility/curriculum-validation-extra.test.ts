@@ -296,3 +296,18 @@ describe('curriculum provenance effective-year bounds', () => {
   expect(validateCurriculum(fixture()).valid).toBe(true);
  });
 });
+
+
+describe('multiple-source provenance validation', () => {
+ it('rejects a curriculum when a secondary source has invalid metadata', () => {
+  const input = fixture();
+  input.sources.push({ ...input.sources[0], sourceUrl: 'http://unverified.example.edu/catalogue' });
+  expect(validateCurriculum(input).issues).toContain('INVALID_SOURCE_METADATA');
+ });
+ it('accepts multiple individually valid sources without implying certification', () => {
+  const input = fixture();
+  input.sources.push({ ...input.sources[0], sourceKind: 'REGISTRY_PROVIDED_WORKBOOK', sourceUrl: 'https://registry.example.edu/workbook' });
+  expect(validateCurriculum(input).valid).toBe(true);
+  expect(input.status).toBe('DRAFT');
+ });
+});
