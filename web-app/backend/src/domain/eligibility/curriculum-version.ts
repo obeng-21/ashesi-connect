@@ -26,23 +26,23 @@ export function validateCurriculum(input: CurriculumVersion): CurriculumValidati
   if (!rules.requiredCourses.length) issues.push('NO_REQUIRED_COURSES');
   const required = new Set<string>();
   for (const course of rules.requiredCourses) {
-    if (!course.courseCode.trim() || required.has(course.courseCode)) issues.push('DUPLICATE_OR_EMPTY_REQUIRED_COURSE');
-    required.add(course.courseCode);
+    if (!course.courseCode.trim() || required.has(course.courseCode.trim())) issues.push('DUPLICATE_OR_EMPTY_REQUIRED_COURSE');
+    required.add(course.courseCode.trim());
     if (!Number.isFinite(course.credits) || course.credits <= 0) issues.push('INVALID_COURSE_CREDITS');
   }
   const poolCategories = new Set<string>();
   for (const pool of rules.electivePools) {
-    if (!pool.category.trim() || poolCategories.has(pool.category)) issues.push('DUPLICATE_OR_EMPTY_ELECTIVE_POOL');
-    poolCategories.add(pool.category);
+    if (!pool.category.trim() || poolCategories.has(pool.category.trim())) issues.push('DUPLICATE_OR_EMPTY_ELECTIVE_POOL');
+    poolCategories.add(pool.category.trim());
     if (!Number.isFinite(pool.creditsRequired) || pool.creditsRequired < 0) issues.push('INVALID_ELECTIVE_CREDITS');
     if (pool.creditsRequired > 0 && !pool.courseCodes.length) issues.push('EMPTY_ELECTIVE_OPTIONS');
-    if (pool.courseCodes.some(code => required.has(code))) issues.push('REQUIRED_COURSE_IN_ELECTIVE_POOL');
+    if (pool.courseCodes.some(code => required.has(code.trim()))) issues.push('REQUIRED_COURSE_IN_ELECTIVE_POOL');
     if (pool.courseCodes.some(code => !code.trim())) issues.push('EMPTY_ELECTIVE_COURSE_CODE');
-    if (new Set(pool.courseCodes).size !== pool.courseCodes.length) issues.push('DUPLICATE_ELECTIVE_COURSE');
+    if (new Set(pool.courseCodes.map(code => code.trim())).size !== pool.courseCodes.length) issues.push('DUPLICATE_ELECTIVE_COURSE');
     if (pool.africanStudiesMinimum !== undefined && (!Number.isInteger(pool.africanStudiesMinimum) || pool.africanStudiesMinimum < 0 || pool.africanStudiesMinimum > pool.courseCodes.length)) issues.push('INVALID_AFRICAN_STUDIES_MINIMUM');
   }
   const allElectiveCodes = rules.electivePools.flatMap(pool => pool.courseCodes);
-  if (new Set(allElectiveCodes).size !== allElectiveCodes.length) issues.push('ELECTIVE_COURSE_IN_MULTIPLE_POOLS');
+  if (new Set(allElectiveCodes.map(code => code.trim())).size !== allElectiveCodes.length) issues.push('ELECTIVE_COURSE_IN_MULTIPLE_POOLS');
   const requiredCredits = rules.requiredCourses.reduce((sum, c) => sum + c.credits, 0);
   const poolCredits = rules.electivePools.reduce((sum, p) => sum + p.creditsRequired, 0);
   if (requiredCredits + poolCredits > rules.totalCredits + 0.0001) issues.push('CREDIT_REQUIREMENTS_EXCEED_TOTAL');
