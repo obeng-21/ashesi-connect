@@ -311,3 +311,23 @@ describe('multiple-source provenance validation', () => {
   expect(input.status).toBe('DRAFT');
  });
 });
+
+describe('reviewed and superseded provenance fail-closed safeguards', () => {
+ it('rejects REVIEWED curriculum when a secondary source is invalid', () => {
+  const input = fixture();
+  input.status = 'REVIEWED';
+  input.sources.push({ ...input.sources[0], sourceUrl: 'http://unverified.example.edu/catalogue' });
+  const result = validateCurriculum(input);
+  expect(result.valid).toBe(false);
+  expect(result.issues).toContain('INVALID_SOURCE_METADATA');
+  expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+ });
+ it('does not exempt SUPERSEDED curriculum from source validation', () => {
+  const input = fixture();
+  input.status = 'SUPERSEDED';
+  input.sources[0].contentHash = ' ';
+  const result = validateCurriculum(input);
+  expect(result.valid).toBe(false);
+  expect(result.issues).toContain('INVALID_SOURCE_METADATA');
+ });
+});
