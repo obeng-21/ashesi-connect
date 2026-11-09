@@ -15,6 +15,10 @@ describe('curriculum elective allocation safeguards',()=>{
  it('accepts non-overlapping elective choices',()=>{
   expect(validateCurriculum(fixture()).valid).toBe(true);
  });
+ it('rejects blank elective course identifiers',()=>{
+  const input=fixture();input.rules.electivePools[0].courseCodes=['E101','   '];
+  expect(validateCurriculum(input).issues).toContain('EMPTY_ELECTIVE_COURSE_CODE');
+ });
  it('rejects duplicate courses within an elective pool',()=>{
   const input=fixture();input.rules.electivePools[0].courseCodes=['E101','E101'];
   expect(validateCurriculum(input).issues).toContain('DUPLICATE_ELECTIVE_COURSE');
