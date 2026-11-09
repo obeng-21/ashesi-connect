@@ -36,6 +36,7 @@ export function validateCurriculum(input: CurriculumVersion): CurriculumValidati
     if (!Number.isFinite(pool.creditsRequired) || pool.creditsRequired < 0) issues.push('INVALID_ELECTIVE_CREDITS');
     if (pool.creditsRequired > 0 && !pool.courseCodes.length) issues.push('EMPTY_ELECTIVE_OPTIONS');
     if (pool.courseCodes.some(code => required.has(code))) issues.push('REQUIRED_COURSE_IN_ELECTIVE_POOL');
+    if (pool.courseCodes.some(code => !code.trim())) issues.push('EMPTY_ELECTIVE_COURSE_CODE');
     if (new Set(pool.courseCodes).size !== pool.courseCodes.length) issues.push('DUPLICATE_ELECTIVE_COURSE');
     if (pool.africanStudiesMinimum !== undefined && (!Number.isInteger(pool.africanStudiesMinimum) || pool.africanStudiesMinimum < 0 || pool.africanStudiesMinimum > pool.courseCodes.length)) issues.push('INVALID_AFRICAN_STUDIES_MINIMUM');
   }
