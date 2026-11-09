@@ -217,3 +217,21 @@ describe('curriculum blank identifier regression safeguards', () => {
   expect(validateCurriculum(input).issues).toContain('DUPLICATE_OR_EMPTY_ELECTIVE_POOL');
  });
 });
+
+describe('curriculum provenance edge-case safeguards', () => {
+ it('rejects an empty provenance retrieval timestamp', () => {
+  const input = fixture();
+  input.sources[0].retrievedAt = '';
+  expect(validateCurriculum(input).issues).toContain('INVALID_SOURCE_METADATA');
+ });
+ it('rejects a non-integer provenance effective year', () => {
+  const input = fixture();
+  input.sources[0].effectiveYear = Number.NaN;
+  expect(validateCurriculum(input).issues).toContain('INVALID_SOURCE_METADATA');
+ });
+ it('rejects a provenance URL with embedded credentials even if the hostname is valid', () => {
+  const input = fixture();
+  input.sources[0].sourceUrl = 'https://name:secret@example.edu/path';
+  expect(validateCurriculum(input).issues).toContain('INVALID_SOURCE_METADATA');
+ });
+});
