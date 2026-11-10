@@ -472,3 +472,25 @@ describe('reviewed curriculum elective allocation fail-closed safeguards', () =>
   expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
  });
 });
+
+
+describe('reviewed curriculum identity and provenance completeness safeguards', () => {
+ it('rejects a REVIEWED curriculum with a blank programme track', () => {
+  const input = fixture();
+  input.status = 'REVIEWED';
+  input.rules.track = '   ';
+  const result = validateCurriculum(input);
+  expect(result.valid).toBe(false);
+  expect(result.issues).toContain('MISSING_PROGRAMME_OR_TRACK');
+  expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+ });
+ it('rejects a REVIEWED curriculum with a blank source content fingerprint', () => {
+  const input = fixture();
+  input.status = 'REVIEWED';
+  input.sources[0].contentHash = '   ';
+  const result = validateCurriculum(input);
+  expect(result.valid).toBe(false);
+  expect(result.issues).toContain('INVALID_SOURCE_METADATA');
+  expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+ });
+});
