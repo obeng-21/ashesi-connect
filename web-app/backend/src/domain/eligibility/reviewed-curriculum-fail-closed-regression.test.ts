@@ -33,6 +33,24 @@ describe('reviewed curriculum invalid metadata and credit regression', () => {
     expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
   });
 
+  it('fails closed when a reviewed required course code is blank', () => {
+    const curriculum = reviewedFixture();
+    curriculum.rules.requiredCourses[0].courseCode = '   ';
+    const result = validateCurriculum(curriculum);
+    expect(result.valid).toBe(false);
+    expect(result.issues).toContain('DUPLICATE_OR_EMPTY_REQUIRED_COURSE');
+    expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+  });
+
+  it('fails closed when a reviewed elective option is blank', () => {
+    const curriculum = reviewedFixture();
+    curriculum.rules.electivePools[0].courseCodes = ['   '];
+    const result = validateCurriculum(curriculum);
+    expect(result.valid).toBe(false);
+    expect(result.issues).toContain('EMPTY_ELECTIVE_COURSE_CODE');
+    expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+  });
+
   it('fails closed when a reviewed elective requirement is negative', () => {
     const curriculum = reviewedFixture();
     curriculum.rules.electivePools[0].creditsRequired = -1;
