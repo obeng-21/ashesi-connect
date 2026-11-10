@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 import { z } from 'zod';
 import { authenticate, issueAccessToken, requireAuth, requireRole, type AuthenticatedRequest } from './auth.js';
 import { Student, Enrollment } from './models.js';
+import { curriculumRouter } from './routes/curriculum.js';
 
 const app = express();
 app.disable('x-powered-by');
@@ -36,6 +37,7 @@ app.get('/api/v1/admin/students', requireAuth, requireRole('ADMIN'), async (req,
  const students = await Student.find(search ? { studentId: { $regex: '^' + search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') } } : {}).limit(50).select('-__v').lean();
  res.json({ students });
 });
+app.use('/api/v1', curriculumRouter);
 app.use((_req, res) => res.status(404).json({ error: 'NOT_FOUND' }));
 async function start() {
  if (!process.env.MONGODB_URI || !process.env.JWT_ACCESS_SECRET) throw new Error('MONGODB_URI and JWT_ACCESS_SECRET are required');
