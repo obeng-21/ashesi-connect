@@ -408,3 +408,24 @@ describe('reviewed curriculum credit-feasibility fail-closed safeguards', () => 
   expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
  });
 });
+
+describe('reviewed curriculum provenance and course-credit fail-closed safeguards', () => {
+ it('rejects a REVIEWED curriculum with a nonpositive provenance effective year', () => {
+  const input = fixture();
+  input.status = 'REVIEWED';
+  input.sources[0].effectiveYear = 0;
+  const result = validateCurriculum(input);
+  expect(result.valid).toBe(false);
+  expect(result.issues).toContain('INVALID_SOURCE_METADATA');
+  expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+ });
+ it('rejects a REVIEWED curriculum with non-finite required-course credits', () => {
+  const input = fixture();
+  input.status = 'REVIEWED';
+  input.rules.requiredCourses[0].credits = Number.NaN;
+  const result = validateCurriculum(input);
+  expect(result.valid).toBe(false);
+  expect(result.issues).toContain('INVALID_COURSE_CREDITS');
+  expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+ });
+});
