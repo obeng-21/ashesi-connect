@@ -494,3 +494,25 @@ describe('reviewed curriculum identity and provenance completeness safeguards', 
   expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
  });
 });
+
+
+describe('reviewed curriculum missing provenance fail-closed safeguards', () => {
+ it('rejects a REVIEWED curriculum with no policy provenance', () => {
+  const input = fixture();
+  input.status = 'REVIEWED';
+  input.sources = [];
+  const result = validateCurriculum(input);
+  expect(result.valid).toBe(false);
+  expect(result.issues).toContain('NO_POLICY_PROVENANCE');
+  expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+ });
+ it('rejects a REVIEWED curriculum with a blank version identifier', () => {
+  const input = fixture();
+  input.status = 'REVIEWED';
+  input.version = '   ';
+  const result = validateCurriculum(input);
+  expect(result.valid).toBe(false);
+  expect(result.issues).toContain('MISSING_VERSION');
+  expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+ });
+});
