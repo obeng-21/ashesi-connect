@@ -450,3 +450,25 @@ describe('reviewed curriculum identity and overlap fail-closed safeguards', () =
   expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
  });
 });
+
+
+describe('reviewed curriculum elective allocation fail-closed safeguards', () => {
+ it('rejects a REVIEWED curriculum with elective courses shared across pools', () => {
+  const input = fixture();
+  input.status = 'REVIEWED';
+  input.rules.electivePools.push({category:'Other',creditsRequired:0,courseCodes:['E101']});
+  const result = validateCurriculum(input);
+  expect(result.valid).toBe(false);
+  expect(result.issues).toContain('ELECTIVE_COURSE_IN_MULTIPLE_POOLS');
+  expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+ });
+ it('rejects a REVIEWED curriculum with duplicate elective choices within a pool', () => {
+  const input = fixture();
+  input.status = 'REVIEWED';
+  input.rules.electivePools[0].courseCodes = ['E101', ' E101 '];
+  const result = validateCurriculum(input);
+  expect(result.valid).toBe(false);
+  expect(result.issues).toContain('DUPLICATE_ELECTIVE_COURSE');
+  expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+ });
+});
