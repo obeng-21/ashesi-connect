@@ -429,3 +429,24 @@ describe('reviewed curriculum provenance and course-credit fail-closed safeguard
   expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
  });
 });
+
+describe('reviewed curriculum identity and overlap fail-closed safeguards', () => {
+ it('rejects a REVIEWED curriculum with a duplicate required course', () => {
+  const input = fixture();
+  input.status = 'REVIEWED';
+  input.rules.requiredCourses.push({ ...input.rules.requiredCourses[0] });
+  const result = validateCurriculum(input);
+  expect(result.valid).toBe(false);
+  expect(result.issues).toContain('DUPLICATE_OR_EMPTY_REQUIRED_COURSE');
+  expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+ });
+ it('rejects a REVIEWED curriculum with an elective that is also required', () => {
+  const input = fixture();
+  input.status = 'REVIEWED';
+  input.rules.electivePools[0].courseCodes.push(input.rules.requiredCourses[0].courseCode);
+  const result = validateCurriculum(input);
+  expect(result.valid).toBe(false);
+  expect(result.issues).toContain('REQUIRED_COURSE_IN_ELECTIVE_POOL');
+  expect(result.issues).toContain('REVIEWED_CURRICULUM_INVALID');
+ });
+});
