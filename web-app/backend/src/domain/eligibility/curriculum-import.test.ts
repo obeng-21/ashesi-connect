@@ -480,4 +480,16 @@ describe('controlled curriculum import',()=>{
   expect(result.issues.length).toBeGreaterThan(0);
  });
 
+ it('rejects embedded credentials in provenance HTTPS URLs',()=>{
+  const result=planCurriculumDraftImport({...sample,sources:[{...sample.sources[0],sourceUrl:'https://user:password@ashesi.edu.gh/catalogue'}]});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
+
+ it('rejects unexpected certification authority fields nested in draft rules',()=>{
+  const result=planCurriculumDraftImport({...sample,rules:{...sample.rules,officiallyCertified:true}});
+  expect(result.accepted).toBe(false);
+  expect(result.draft).toBeNull();
+ });
+
 });
